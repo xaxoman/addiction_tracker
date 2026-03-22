@@ -1,3 +1,87 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Safe area support for mobile devices */
+:root {
+  --safe-area-inset-top: 0px;
+  --safe-area-inset-bottom: 0px;
+  --safe-area-inset-left: 0px;
+  --safe-area-inset-right: 0px;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  :root {
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+  }
+}
+
+.safe-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.safe-left {
+  padding-left: var(--safe-area-inset-left);
+}
+
+.safe-right {
+  padding-right: var(--safe-area-inset-right);
+}
+
+.safe-all {
+  padding: var(--safe-area-inset-top) var(--safe-area-inset-right) var(--safe-area-inset-bottom) var(--safe-area-inset-left);
+}
+
+/* Fallback for devices that don't support safe-area-inset */
+.has-safe-area .safe-top {
+  padding-top: max(var(--safe-area-inset-top), 15px);
+}
+
+/* Ensure the app takes full height including safe areas */
+html, body, #root {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+}
+
+/* Android specific adjustments */
+.capacitor-android header .safe-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 20px) !important;
+}
+
+/* Additional Android fallback */
+@media screen and (max-width: 768px) {
+  .capacitor-android .safe-top {
+    padding-top: max(var(--safe-area-inset-top), 20px);
+  }
+  
+  /* More precise mobile padding */
+  .capacitor-android header .safe-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 24px) !important;
+  }
+}
+
+/* Optimized header spacing for mobile */
+.mobile-header-spacing {
+  padding-top: 8px;
+}
+
+/* Native mobile app adjustments */
+.capacitor-platform .mobile-header-spacing {
+  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+}
+
+/* Specific platform adjustments */
+.capacitor-android .mobile-header-spacing {
+  padding-top: max(env(safe-area-inset-top, 0px), 12px);
+}
+
+.capacitor-ios .mobile-header-spacing {
+  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+}

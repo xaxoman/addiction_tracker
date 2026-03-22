@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#3B82F6"/>
+  
+  <!-- Inner content -->
+  <g transform="translate(128,128)">
+    <!-- Breaking chains symbol -->
+    <path d="M120 120L136 104L152 120L136 136L120 120Z" fill="white" stroke="white" stroke-width="4"/>
+    <path d="M104 136L120 120L136 136L120 152L104 136Z" fill="white" stroke="white" stroke-width="4"/>
+    
+    <!-- Freedom symbol - rising arrow -->
+    <path d="M180 220L220 180L200 160L160 200L180 220Z" fill="white"/>
+    <path d="M220 180L240 200L240 240L220 240L220 180Z" fill="white"/>
+    
+    <!-- Text elements represented as simple shapes -->
+    <rect x="80" y="200" width="60" height="8" rx="4" fill="white" opacity="0.8"/>
+    <rect x="80" y="220" width="40" height="8" rx="4" fill="white" opacity="0.6"/>
+    <rect x="80" y="240" width="50" height="8" rx="4" fill="white" opacity="0.4"/>
+  </g>
+</svg>

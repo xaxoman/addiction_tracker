@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ThemeProvider } from './context/ThemeContext';
+import { useState, useEffect } from 'react';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AddictionProvider, useAddictions } from './context/AddictionContext';
 import { Addiction } from './types';
 import Header from './components/Header';
@@ -8,13 +8,58 @@ import AddAddictionDialog from './components/AddAddictionDialog';
 import DraggableAddictionList from './components/DraggableAddictionList';
 import StatsSection from './components/StatsSection';
 import EmptyState from './components/EmptyState';
+import { capacitorService } from './services/capacitor';
+import { safeAreaService } from './services/safeArea';
+import { createAutomaticBackupIfDue } from './utils/backup';
 
 const AppContent = () => {
   const { addictions, addAddiction, removeAddiction, updateAddiction, resetLastEngaged, reorderAddictions } = useAddictions();
+  const { theme } = useTheme();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAddiction, setEditingAddiction] = useState<Addiction | null>(null);
 
-  const handleAddAddiction = (data: any) => {
+  const isDarkMode = theme === 'dark';
+
+  // Initialize Capacitor services
+  useEffect(() => {
+    const initializeApp = async () => {
+      await capacitorService.initialize();
+      await safeAreaService.initialize();
+      
+      // Set status bar style based on theme
+      await capacitorService.setStatusBarStyle(isDarkMode);
+    };
+
+    initializeApp();
+  }, []);
+
+  // Update status bar when theme changes
+  useEffect(() => {
+    capacitorService.setStatusBarStyle(isDarkMode);
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    // Check on mount and whenever user data changes so we can create a daily backup.
+    const checkAndCreateDailyBackup = () => {
+      try {
+        createAutomaticBackupIfDue(addictions, theme);
+      } catch (error) {
+        console.error('Automatic backup failed:', error);
+      }
+    };
+
+    checkAndCreateDailyBackup();
+    const intervalId = window.setInterval(checkAndCreateDailyBackup, 60 * 60 * 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [addictions, theme]);
+
+  const handleAddAddiction = async (data: any) => {
+    // Provide haptic feedback on native platforms
+    await capacitorService.vibrate();
+    
     if (editingAddiction) {
       updateAddiction({
         ...editingAddiction,
@@ -39,10 +84,18 @@ const AppContent = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this addiction tracker?')) {
+      // Provide haptic feedback on deletion
+      await capacitorService.vibrate();
       removeAddiction(id);
     }
+  };
+
+  const handleReset = async (id: string) => {
+    // Provide haptic feedback on reset
+    await capacitorService.vibrate();
+    resetLastEngaged(id, new Date());
   };
 
   return (
@@ -55,7 +108,7 @@ const AppContent = () => {
             <StatsSection addictions={addictions} />
             <DraggableAddictionList 
               addictions={addictions} 
-              onReset={resetLastEngaged} 
+              onReset={handleReset} 
               onReorder={reorderAddictions}
               onEdit={handleEdit}
               onDelete={handleDelete}

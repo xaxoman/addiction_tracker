@@ -1,21 +1,35 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "break-free-addiction-tracker",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:pwa": "vite build && npx cap sync",
+    "dev:mobile": "npx cap run android --livereload --external",
+    "build:android": "vite build && npx cap sync android && npx cap open android",
+    "build:ios": "vite build && npx cap sync ios && npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^7.3.0",
+    "@capacitor/app": "^7.0.1",
+    "@capacitor/cli": "^7.3.0",
+    "@capacitor/core": "^7.3.0",
+    "@capacitor/haptics": "^7.0.1",
+    "@capacitor/keyboard": "^7.0.1",
+    "@capacitor/splash-screen": "^7.0.1",
+    "@capacitor/status-bar": "^7.0.1",
+    "capacitor-plugin-safe-area": "^4.0.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@types/node": "^22.15.29",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -28,6 +42,8 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
-    "vite": "^5.4.2"
+    "vite": "^5.4.2",
+    "vite-plugin-pwa": "^1.0.0",
+    "workbox-window": "^7.3.0"
   }
 }

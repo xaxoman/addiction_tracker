@@ -9,6 +9,7 @@ type AddictionContextType = {
   updateAddiction: (updatedAddiction: Addiction) => void;
   resetLastEngaged: (id: string, date: Date, note?: string) => void;
   reorderAddictions: (startIndex: number, endIndex: number) => void;
+  replaceAddictions: (nextAddictions: Addiction[]) => void;
 };
 
 const AddictionContext = createContext<AddictionContextType | undefined>(undefined);
@@ -97,6 +98,14 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setAddictions(result);
   };
 
+  const replaceAddictions = (nextAddictions: Addiction[]) => {
+    const sanitized = nextAddictions.map((addiction) => sanitizeAddictionData({
+      ...addiction,
+      id: addiction.id || crypto.randomUUID()
+    }));
+    setAddictions(sanitized);
+  };
+
   return (
     <AddictionContext.Provider 
       value={{ 
@@ -105,7 +114,8 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         removeAddiction, 
         updateAddiction, 
         resetLastEngaged,
-        reorderAddictions
+        reorderAddictions,
+        replaceAddictions
       }}
     >
       {children}

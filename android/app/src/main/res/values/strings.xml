@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Break Free</string>
+    <string name="title_activity_main">Break Free</string>
+    <string name="package_name">com.breakfree.app</string>
+    <string name="custom_url_scheme">com.breakfree.app</string>
+</resources>

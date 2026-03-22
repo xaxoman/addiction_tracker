@@ -4,6 +4,7 @@ import { ThemeMode } from '../types';
 type ThemeContextType = {
   theme: ThemeMode;
   toggleTheme: () => void;
+  setThemeMode: (nextTheme: ThemeMode) => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -28,8 +29,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
+  const setThemeMode = (nextTheme: ThemeMode) => {
+    setTheme(nextTheme);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeMode }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -4,6 +4,18 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      spacing: {
+        'safe': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
+      padding: {
+        'safe': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
       animation: {
         'fade-in-up': 'fadeInUp 0.3s ease-out forwards',
         'fade-in': 'fadeIn 0.2s ease-out forwards',
