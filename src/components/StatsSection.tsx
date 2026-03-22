@@ -2,12 +2,15 @@ import React, { useMemo } from 'react';
 import { LineChart, BarChart, Download } from 'lucide-react';
 import { Addiction } from '../types';
 import { exportAddictionsToCSV } from '../utils/exportData';
+import { useI18n } from '../i18n/useI18n';
 
 interface StatsSectionProps {
   addictions: Addiction[];
 }
 
 const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
+  const { t } = useI18n();
+
   const totalSavings = useMemo(() => {
     return addictions.reduce((total, addiction) => {
       if (addiction.costType !== 'money') return total;
@@ -47,11 +50,11 @@ const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
     try {
       exportAddictionsToCSV(addictions);
       setTimeout(() => {
-        alert('Export successful! Your addiction data has been downloaded as CSV.');
+        alert(t('exportSuccess'));
       }, 100);
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
+      alert(t('exportFailed'));
     }
   };
 
@@ -62,7 +65,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
   return (
     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-medium text-blue-800 dark:text-blue-300">Your Progress</h2>
+        <h2 className="text-lg font-medium text-blue-800 dark:text-blue-300">{t('yourProgress')}</h2>
         
         <button
           onClick={handleQuickExport}
@@ -72,7 +75,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
           title="Quick export to CSV"
         >
           <Download size={12} />
-          <span>Export</span>
+          <span>{t('export')}</span>
         </button>
       </div>
       
@@ -80,7 +83,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
           <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
             <BarChart size={16} />
-            <span className="text-sm font-medium">Money Saved</span>
+            <span className="text-sm font-medium">{t('moneySaved')}</span>
           </div>
           <p className="text-xl font-bold text-gray-800 dark:text-white">
             ${isNaN(totalSavings) ? '0.00' : totalSavings.toFixed(2)}
@@ -90,10 +93,10 @@ const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
           <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
             <LineChart size={16} />
-            <span className="text-sm font-medium">Longest Streak</span>
+            <span className="text-sm font-medium">{t('longestStreak')}</span>
           </div>
           <p className="text-xl font-bold text-gray-800 dark:text-white">
-            {isNaN(longestStreak) ? 0 : longestStreak} days
+            {isNaN(longestStreak) ? 0 : longestStreak} {t('days')}
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import IconPicker from './IconPicker';
 import { Addiction } from '../types';
+import { useI18n } from '../i18n/useI18n';
 
 interface AddAddictionDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
   onAdd,
   editingAddiction 
 }) => {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('🚫');
   const [cost, setCost] = useState('');
@@ -79,7 +81,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
     const parsedGoalValue = parseFloat(goalValue);
     
     if (isNaN(parsedCost) || isNaN(parsedGoalValue) || parsedCost < 0 || parsedGoalValue < 0) {
-      alert('Please enter valid positive numbers for cost and goal value.');
+      alert(t('invalidNumbers'));
       return;
     }
     
@@ -89,7 +91,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
     
     // Validate the date
     if (isNaN(lastEngagedDate.getTime())) {
-      alert('Please enter a valid date and time.');
+      alert(t('invalidDateTime'));
       return;
     }
     
@@ -130,7 +132,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl animate-fade-in-up">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {editingAddiction ? 'Edit Addiction' : 'Add New Addiction'}
+            {editingAddiction ? t('editAddiction') : t('addNewAddiction')}
           </h2>
           <button 
             onClick={onClose}
@@ -143,7 +145,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Addiction Name
+              {t('addictionName')}
             </label>
             <input
               type="text"
@@ -160,7 +162,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Choose an Icon
+              {t('chooseIcon')}
             </label>
             <IconPicker selectedIcon={icon} onSelectIcon={setIcon} />
           </div>
@@ -168,7 +170,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           <div className="mb-4 grid grid-cols-5 gap-3">
             <div className="col-span-3">
               <label htmlFor="cost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Cost per Engagement
+                {t('costPerEngagement')}
               </label>
               <input
                 type="number"
@@ -187,7 +189,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
             
             <div className="col-span-2">
               <label htmlFor="costType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Type
+                {t('type')}
               </label>
               <select
                 id="costType"
@@ -197,9 +199,9 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
               >
-                <option value="money">Money</option>
-                <option value="time">Time</option>
-                <option value="health">Health</option>
+                <option value="money">{t('money')}</option>
+                <option value="time">{t('time')}</option>
+                <option value="health">{t('health')}</option>
               </select>
             </div>
           </div>
@@ -207,7 +209,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           <div className="mb-4 grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="lastEngaged" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Last Engaged Date
+                {t('lastEngagedDate')}
               </label>
               <input
                 type="date"
@@ -223,7 +225,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
             </div>
             <div>
               <label htmlFor="lastEngagedTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Last Engaged Time
+                {t('lastEngagedTime')}
               </label>
               <input
                 type="time"
@@ -241,7 +243,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           <div className="mb-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Goal Type
+                {t('goalType')}
               </label>
               <select
                 value={goalType}
@@ -250,15 +252,15 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
               >
-                <option value="time">Time Goal</option>
-                <option value="money">Money Goal</option>
+                <option value="time">{t('timeGoal')}</option>
+                <option value="money">{t('moneyGoal')}</option>
               </select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="goalValue" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Goal Value
+                  {t('goalValue')}
                 </label>
                 <input
                   type="number"
@@ -276,7 +278,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
               
               <div>
                 <label htmlFor="goalUnit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Goal Unit
+                  {t('goalUnit')}
                 </label>
                 <select
                   id="goalUnit"
@@ -288,13 +290,13 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                 >
                   {goalType === 'time' ? (
                     <>
-                      <option value="hours">Hours</option>
-                      <option value="days">Days</option>
-                      <option value="weeks">Weeks</option>
-                      <option value="months">Months</option>
+                      <option value="hours">{t('hours')}</option>
+                      <option value="days">{t('days')}</option>
+                      <option value="weeks">{t('weeks')}</option>
+                      <option value="months">{t('months')}</option>
                     </>
                   ) : (
-                    <option value="dollars">Dollars</option>
+                    <option value="dollars">{t('dollars')}</option>
                   )}
                 </select>
               </div>
@@ -309,7 +311,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                         rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
                         transition-colors duration-200"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -317,7 +319,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                         rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 
                         transition-colors duration-200"
             >
-              {editingAddiction ? 'Save Changes' : 'Add'}
+              {editingAddiction ? t('saveChanges') : t('add')}
             </button>
           </div>
         </form>

@@ -1,11 +1,14 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
+import { useI18n } from '../i18n/useI18n';
 
 interface EmptyStateProps {
   onAdd: () => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ onAdd }) => {
+  const { t } = useI18n();
+
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
@@ -13,11 +16,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onAdd }) => {
       </div>
       
       <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-        Start Your Journey
+        {t('startJourney')}
       </h2>
       
       <p className="text-gray-600 dark:text-gray-400 max-w-sm mb-6">
-        Track your addictions, see your progress, and take control of your habits.
+        {t('startJourneyDesc')}
       </p>
       
       <button
@@ -26,7 +29,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onAdd }) => {
                   rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 
                   transition-colors duration-200 font-medium"
       >
-        Add Your First Addiction
+        {t('addFirstAddiction')}
       </button>
     </div>
   );

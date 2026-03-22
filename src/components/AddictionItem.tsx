@@ -3,6 +3,7 @@ import { MoreVertical, RefreshCw, Edit, Trash2, X, Calendar, ChevronLeft, Chevro
 import { Addiction } from '../types';
 import ProgressCircle from './ProgressCircle';
 import { exportSingleAddictionToCSV } from '../utils/exportData';
+import { useI18n } from '../i18n/useI18n';
 
 interface AddictionItemProps {
   addiction: Addiction;
@@ -12,6 +13,7 @@ interface AddictionItemProps {
 }
 
 const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdit, onDelete }) => {
+  const { t } = useI18n();
   const [timeSince, setTimeSince] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -160,7 +162,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
 
   const getGoalLabel = () => {
     if (!addiction.goal || !addiction.goal.value || isNaN(addiction.goal.value)) {
-      return 'No goal set';
+      return t('noGoalSet');
     }
     if (addiction.goal.type === 'money') {
       return `$${addiction.goal.value.toFixed(2)}`;
@@ -225,11 +227,11 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
       exportSingleAddictionToCSV(addiction);
       setIsMenuOpen(false);
       setTimeout(() => {
-        alert(`Export successful! Data for "${addiction.name}" has been downloaded as CSV.`);
+        alert(t('exportSuccess'));
       }, 100);
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
+      alert(t('exportFailed'));
     }
   };
 
@@ -283,7 +285,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                            hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                 >
                   <Calendar size={16} />
-                  View History
+                  {t('viewHistory')}
                 </button>
                 <button
                   onClick={handleExportData}
@@ -291,7 +293,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                            hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                 >
                   <Download size={16} />
-                  Export Data
+                  {t('exportData')}
                 </button>
                 <button
                   onClick={() => {
@@ -302,7 +304,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                            hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                 >
                   <Edit size={16} />
-                  Edit
+                  {t('edit')}
                 </button>
                 <button
                   onClick={() => {
@@ -313,7 +315,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                            hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
                 >
                   <Trash2 size={16} />
-                  Delete
+                  {t('delete')}
                 </button>
               </div>
             )}
@@ -323,7 +325,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
         <div className="grid grid-cols-3 max-[450px]:grid-cols-1 gap-6 max-[450px]:gap-2 mb-6">
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-              Cost per time
+              {t('costPerTime')}
             </div>
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               {getCostLabel()}
@@ -332,21 +334,21 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
           
           <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
             <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">
-              Clean for
+              {t('cleanFor')}
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-semibold text-blue-700 dark:text-blue-300">
                 {daysSince}
               </span>
               <span className="text-blue-600 dark:text-blue-400">
-                days
+                {t('days')}
               </span>
             </div>
           </div>
 
           <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
             <div className="text-sm text-green-600 dark:text-green-400 mb-1">
-              Goal
+              {t('goal')}
             </div>
             <div className="text-lg font-semibold text-green-700 dark:text-green-300">
               {getGoalLabel()}
@@ -357,7 +359,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
         <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
           <div>
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-              Total saved
+              {t('totalSaved')}
             </div>
             <div className="text-xl font-semibold text-green-600 dark:text-green-400">
               {addiction.costType === 'money' ? '$' : ''}{getSavedAmount()} 
@@ -378,7 +380,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                        hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
             >
               <RefreshCw size={16} />
-              <span>Reset</span>
+              <span>{t('reset')}</span>
             </button>
           </div>
         </div>
@@ -389,7 +391,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Record Relapse
+                {t('recordRelapse')}
               </h2>
               <button 
                 onClick={() => setShowResetDialog(false)}
@@ -403,7 +405,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Date
+                    {t('lastEngagedDate')}
                   </label>
                   <input
                     type="date"
@@ -417,7 +419,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Time
+                    {t('time')}
                   </label>
                   <input
                     type="time"
@@ -432,12 +434,12 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Note (optional)
+                  {t('noteOptional')}
                 </label>
                 <textarea
                   value={resetNote}
                   onChange={(e) => setResetNote(e.target.value)}
-                  placeholder="What triggered this relapse?"
+                  placeholder={t('relapsePrompt')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
                             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -452,7 +454,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                             rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
                             transition-colors duration-200"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   onClick={handleResetConfirm}
@@ -460,7 +462,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                             rounded-lg hover:bg-red-600 dark:hover:bg-red-500 
                             transition-colors duration-200"
                 >
-                  Confirm Reset
+                  {t('confirmReset')}
                 </button>
               </div>
             </div>
@@ -473,7 +475,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Relapse History
+                {t('relapseHistory')}
               </h2>
               <button 
                 onClick={() => setShowHistoryDialog(false)}
@@ -533,7 +535,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                               <div
                                 key={i}
                                 className="text-xs text-red-600 dark:text-red-400 truncate"
-                                title={relapse.text || 'No note'}
+                                title={relapse.text || t('noNote')}
                               >
                                 {new Date(relapse.date).toLocaleTimeString([], { 
                                   hour: '2-digit',
@@ -552,7 +554,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Recent Relapses
+                {t('recentRelapses')}
               </h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {addiction.notes?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
