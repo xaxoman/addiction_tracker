@@ -1,131 +1,117 @@
 # Break Free - Addiction Tracker
 
-A modern Progressive Web App (PWA) built with React, TypeScript, and Ionic Capacitor to help users track and overcome their addictions. Monitor your progress, visualize your savings, and stay motivated on your journey to freedom.
+A Progressive Web App (PWA) and Capacitor mobile app to track addictions, visualize progress, and stay consistent.
 
-## 🚀 Features
+## Features
 
-- **Addiction Tracking**: Monitor your progress in breaking free from various addictions
-- **Progress Visualization**: View your journey with intuitive charts and statistics
-- **Savings Calculator**: Calculate money saved by overcoming costly habits
-- **PWA Support**: Install as a native app on mobile and desktop
-- **Cross-Platform**: Runs as web app, Android app, and iOS app
-- **Offline Support**: Works offline with service worker caching
-- **Haptic Feedback**: Native haptic feedback on mobile devices
-- **Dark/Light Theme**: Adaptive theming with system preference detection
-- **Modern UI**: Clean, responsive design built with Tailwind CSS
+- Addiction tracking with progress stats
+- PWA support (installable + offline)
+- Android support via Capacitor
+- Dark and light theme
+- Data export (CSV/TSV)
+- JSON backup/import flow with last-backup info
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Frontend**: React 18 with TypeScript
-- **Build Tool**: Vite with PWA plugin
-- **Mobile Framework**: Ionic Capacitor
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **PWA**: Workbox service worker
-- **Native Features**: Haptics, Status Bar, Splash Screen, Keyboard management
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- Capacitor (Android)
+- Workbox (PWA)
 
-## 📋 Prerequisites
+## Prerequisites
 
-- Node.js (version 16 or higher)
-- npm or yarn package manager
-- Android Studio (for Android development)
-- Xcode (for iOS development, macOS only)
+- Node.js 18+ (Node 22 is supported)
+- npm
+- Android Studio + Android SDK (for APK builds)
+- Java 17 (required by recent Android Gradle plugins)
 
-## 🚀 Getting Started
+## Setup
 
-### Installation
-
-1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd project
-```
-
-2. Install dependencies:
-```bash
+cd addiction_tracker
 npm install
 ```
 
-### Development
+## Run PWA Locally (Debug)
 
-Start the development server:
+Start dev server:
+
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+Open:
 
-### Building for Production
+- `http://localhost:5173`
 
-Create a production build with PWA:
+Build and preview production PWA locally:
+
 ```bash
-npm run build:pwa
-```
-
-Preview the production build:
-```bash
+npm run build
 npm run preview
 ```
 
-## 📱 Mobile Development
+## Android Workflow
 
-### Android Development
+### Fast Local Mobile Debug (Live Reload)
 
-1. Build and sync to Android:
-```bash
-npm run build:android
-```
-
-2. Run on Android device with live reload:
 ```bash
 npm run dev:mobile
 ```
 
-3. Build APK:
-- Open Android Studio from the project
-- Build > Build Bundle(s) / APK(s) > Build APK(s)
+This pushes the app to a connected Android device/emulator with live reload.
 
-### iOS Development (macOS only)
+### One-Command APK Build
 
-1. Install iOS platform:
+Use the unified APK script:
+
 ```bash
-npm install @capacitor/ios
-npx cap add ios
+npm run build:apk
 ```
 
-2. Build and sync to iOS:
+This automatically runs:
+
+1. `npm run build`
+2. `npx cap sync android`
+3. `android/gradlew(.bat) assembleDebug`
+
+APK output:
+
+- `android/app/build/outputs/apk/debug/app-debug.apk`
+
+Optional dry run (prints the pipeline without executing):
+
 ```bash
-npm run build:ios
+npm run build:apk -- --dry-run
 ```
 
-## 🧪 Code Quality
+### Open Android Studio Project
 
-Run ESLint to check code quality:
 ```bash
-npm run lint
+npm run build:android
 ```
 
-## 📱 PWA Features
+This builds web assets, syncs Capacitor, and opens Android Studio.
 
-The app includes PWA (Progressive Web App) capabilities:
-- Theme color configuration
-- Responsive design for mobile devices
-- Optimized for various screen sizes
+## Available Scripts
 
-## 🤝 Contributing
+- `npm run dev`: Start Vite dev server
+- `npm run build`: Production web build
+- `npm run preview`: Preview production build
+- `npm run build:pwa`: Build + Capacitor sync
+- `npm run dev:mobile`: Run Android with live reload
+- `npm run build:apk`: Build debug APK in one command
+- `npm run build:android`: Build + sync + open Android Studio
+- `npm run lint`: Run ESLint
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
+## Troubleshooting
 
-## 📄 License
+- If `vite` is not recognized: run `npm install`.
+- If Android build fails: verify Java 17 and Android SDK setup.
+- If Vercel fails with Rollup native module errors: ensure lockfile is up to date and redeploy from latest `main`.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## License
 
-## 🆘 Support
-
-If you encounter any issues or have questions, please open an issue in the repository.
-
----
+MIT. See `LICENSE`.
