@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AddictionProvider, useAddictions } from './context/AddictionContext';
 import { AppSettingsProvider, useAppSettings } from './context/AppSettingsContext';
@@ -25,6 +26,7 @@ const AppContent = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAddiction, setEditingAddiction] = useState<Addiction | null>(null);
   const [activeTab, setActiveTab] = useState<AppTab>('home');
+  const [autoBackupNotice, setAutoBackupNotice] = useState<string | null>(null);
 
   const isDarkMode = theme === 'dark';
 
@@ -62,21 +64,40 @@ const AppContent = () => {
 
   useEffect(() => {
     // Check on mount and whenever user data changes so we can create a daily backup.
-    const checkAndCreateDailyBackup = () => {
+    const checkAndCreateDailyBackup = async () => {
       try {
-        createAutomaticBackupIfDue(addictions, theme);
+        const result = await createAutomaticBackupIfDue(addictions, theme);
+        if (result.created) {
+          setAutoBackupNotice(t('autoBackupCreatedPill'));
+        }
       } catch (error) {
         console.error('Automatic backup failed:', error);
       }
     };
 
     checkAndCreateDailyBackup();
-    const intervalId = window.setInterval(checkAndCreateDailyBackup, 60 * 60 * 1000);
+    const intervalId = window.setInterval(() => {
+      void checkAndCreateDailyBackup();
+    }, 60 * 60 * 1000);
 
     return () => {
       window.clearInterval(intervalId);
     };
   }, [addictions, theme]);
+
+  useEffect(() => {
+    if (!autoBackupNotice) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAutoBackupNotice(null);
+    }, 2600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [autoBackupNotice]);
 
   const handleAddAddiction = async (data: any) => {
     // Provide haptic feedback on native platforms
@@ -171,6 +192,13 @@ const AppContent = () => {
       )}
 
       <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {autoBackupNotice && (
+        <div className="fixed left-1/2 bottom-[calc(5rem+var(--safe-area-inset-bottom))] -translate-x-1/2 z-[120] px-3 py-2 rounded-full bg-green-600 text-white shadow-lg flex items-center gap-2 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{autoBackupNotice}</span>
+        </div>
+      )}
       
       <AddAddictionDialog 
         isOpen={isDialogOpen} 

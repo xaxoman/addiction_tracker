@@ -106,6 +106,7 @@ const en: Dictionary = {
   exportFailed: 'Export failed. Please try again.',
   noDataToExport: 'No addiction data to export. Please add some addictions first.',
   backupCreated: 'Backup created successfully:',
+  autoBackupCreatedPill: 'Backup created',
   backupCreateFailed: 'Could not create backup. Please try again.',
   backupImported: 'Backup imported successfully. Your data and settings have been restored.',
   backupImportFailed: 'Backup import failed. Please choose a valid backup JSON file.'
@@ -215,6 +216,7 @@ const it: Dictionary = {
   exportFailed: 'Esportazione fallita. Riprova.',
   noDataToExport: 'Nessun dato da esportare. Aggiungi prima una dipendenza.',
   backupCreated: 'Backup creato con successo:',
+  autoBackupCreatedPill: 'Backup creato',
   backupCreateFailed: 'Impossibile creare il backup. Riprova.',
   backupImported: 'Backup importato con successo. Dati e impostazioni ripristinati.',
   backupImportFailed: 'Import backup fallito. Scegli un file JSON valido.'

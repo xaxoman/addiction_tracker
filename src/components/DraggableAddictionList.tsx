@@ -17,6 +17,9 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
   onEdit,
   onDelete
 }) => {
+  const isTouchDevice = typeof window !== 'undefined' && (
+    'ontouchstart' in window || navigator.maxTouchPoints > 0
+  );
   const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
   const [dragOverItemIndex, setDragOverItemIndex] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -59,7 +62,7 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
       {addictions.map((addiction, index) => (
         <div
           key={addiction.id}
-          draggable
+          draggable={!isTouchDevice}
           onDragStart={() => handleDragStart(index)}
           onDragOver={(e) => handleDragOver(e, index)}
           onDrop={handleDrop}
@@ -70,8 +73,8 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
               : dragOverItemIndex === index 
                 ? 'transform translate-y-2 border-2 border-blue-300 dark:border-blue-700 rounded-xl' 
                 : ''
-          } transition-all duration-200 cursor-grab active:cursor-grabbing touch-manipulation`}
-          style={{ touchAction: 'none' }}
+          } transition-all duration-200 ${isTouchDevice ? 'touch-auto' : 'cursor-grab active:cursor-grabbing'} touch-manipulation`}
+          style={{ touchAction: isTouchDevice ? 'pan-y' : 'auto' }}
         >
           <AddictionItem 
             addiction={addiction} 

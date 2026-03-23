@@ -83,7 +83,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
     setIsHandlingBackup(true);
 
     try {
-      const { backup, filename } = createBackup(addictions, theme, 'manual');
+      const { backup, filename } = await createBackup(addictions, theme, 'manual');
       setLastBackupAt(backup.createdAt);
       setLastBackupFilename(filename);
       alert(`${t('backupCreated')} ${filename}`);

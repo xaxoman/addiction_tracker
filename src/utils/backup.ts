@@ -1,4 +1,6 @@
 import { Addiction, ThemeMode } from '../types';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 
 export const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 export const LAST_BACKUP_AT_KEY = 'lastBackupAt';
@@ -75,23 +77,38 @@ export const downloadBackupFile = (backup: AppBackup, filename: string): void =>
   URL.revokeObjectURL(url);
 };
 
-export const createBackup = (
+const saveBackupToNativeFilesystem = async (backup: AppBackup, filename: string): Promise<void> => {
+  await Filesystem.writeFile({
+    path: filename,
+    data: JSON.stringify(backup, null, 2),
+    directory: Directory.Documents,
+    encoding: Encoding.UTF8,
+    recursive: true
+  });
+};
+
+export const createBackup = async (
   addictions: Addiction[],
   theme: ThemeMode,
   source: 'auto' | 'manual'
-): { backup: AppBackup; filename: string } => {
+): Promise<{ backup: AppBackup; filename: string }> => {
   const backup = buildBackupPayload(addictions, theme, source);
   const filename = getBackupFilename(new Date(backup.createdAt));
   persistBackupMetadata(backup, filename);
-  downloadBackupFile(backup, filename);
+
+  if (Capacitor.isNativePlatform()) {
+    await saveBackupToNativeFilesystem(backup, filename);
+  } else {
+    downloadBackupFile(backup, filename);
+  }
 
   return { backup, filename };
 };
 
-export const createAutomaticBackupIfDue = (
+export const createAutomaticBackupIfDue = async (
   addictions: Addiction[],
   theme: ThemeMode
-): { created: boolean; filename?: string } => {
+): Promise<{ created: boolean; filename?: string }> => {
   const lastBackupAt = localStorage.getItem(LAST_BACKUP_AT_KEY);
 
   if (lastBackupAt) {
@@ -101,7 +118,7 @@ export const createAutomaticBackupIfDue = (
     }
   }
 
-  const { filename } = createBackup(addictions, theme, 'auto');
+  const { filename } = await createBackup(addictions, theme, 'auto');
   return { created: true, filename };
 };
 
