@@ -12,9 +12,31 @@ interface AddictionItemProps {
   onDelete: (id: string) => void;
 }
 
+// Compact, human-readable elapsed time. Rolls hours up into days so the
+// value never grows unbounded (e.g. 2762h -> 115d 6h 49m). Seconds are only
+// shown for short durations where the live ticker is meaningful.
+const formatElapsed = (days: number, hours: number, minutes: number, seconds: number): string => {
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+};
+
+// Time-based savings are accumulated in minutes; roll them up into
+// hours and days so large totals stay readable (e.g. 1725 min -> 1d 4h).
+const formatMinutesSaved = (totalMinutes: number): string => {
+  const mins = Math.max(0, Math.round(totalMinutes));
+  const days = Math.floor(mins / 1440);
+  const hours = Math.floor((mins % 1440) / 60);
+  const minutes = mins % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+};
+
 const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdit, onDelete }) => {
   const { t } = useI18n();
-  const [timeSince, setTimeSince] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [timeSince, setTimeSince] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
@@ -30,12 +52,13 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
       const now = new Date();
       const lastEngaged = new Date(addiction.lastEngaged);
       const diffTime = Math.abs(now.getTime() - lastEngaged.getTime());
-      
-      const hours = Math.floor(diffTime / (1000 * 60 * 60));
+
+      const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-      
-      setTimeSince({ hours, minutes, seconds });
+
+      setTimeSince({ days, hours, minutes, seconds });
     };
 
     updateTimeSince();
@@ -154,10 +177,24 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
     }
   };
   
-  const getSavedAmount = () => {
+  const getSavedAmount = (): number => {
     const costValue = typeof addiction.cost === 'number' && !isNaN(addiction.cost) ? addiction.cost : 0;
     const savedAmount = costValue * daysSince;
-    return isNaN(savedAmount) ? '0.00' : Math.max(0, savedAmount).toFixed(2);
+    return isNaN(savedAmount) ? 0 : Math.max(0, savedAmount);
+  };
+
+  const getSavedLabel = (): string => {
+    const amount = getSavedAmount();
+    switch (addiction.costType) {
+      case 'money':
+        return `$${amount.toFixed(2)}`;
+      case 'time':
+        return formatMinutesSaved(amount);
+      case 'health':
+        return `${amount} impact`;
+      default:
+        return `${amount}`;
+    }
   };
 
   const getGoalLabel = () => {
@@ -253,7 +290,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
               <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
                 <p>Last engaged: {new Date(addiction.lastEngaged).toLocaleDateString()}</p>
                 <p className="font-medium text-blue-600 dark:text-blue-400">
-                  {timeSince.hours}h {timeSince.minutes}m {timeSince.seconds}s ago
+                  {formatElapsed(timeSince.days, timeSince.hours, timeSince.minutes, timeSince.seconds)} ago
                 </p>
               </div>
             </div>
@@ -362,9 +399,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
               {t('totalSaved')}
             </div>
             <div className="text-xl font-semibold text-green-600 dark:text-green-400">
-              {addiction.costType === 'money' ? '$' : ''}{getSavedAmount()} 
-              {addiction.costType === 'time' ? ' min' : ''}
-              {addiction.costType === 'health' ? ' impact' : ''}
+              {getSavedLabel()}
             </div>
           </div>
 
