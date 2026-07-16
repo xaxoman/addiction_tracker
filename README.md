@@ -10,6 +10,7 @@ A Progressive Web App (PWA) and Capacitor mobile app to track addictions, visual
 - Dark and light theme
 - Data export (CSV/TSV)
 - JSON backup/import flow with last-backup info
+- Optional account (email + password) with automatic cloud backup to Neon Postgres
 
 ## Tech Stack
 
@@ -18,6 +19,7 @@ A Progressive Web App (PWA) and Capacitor mobile app to track addictions, visual
 - Tailwind CSS
 - Capacitor (Android)
 - Workbox (PWA)
+- Vercel serverless functions + Neon Postgres (login + cloud backup)
 
 ## Prerequisites
 
@@ -33,6 +35,42 @@ git clone <repository-url>
 cd addiction_tracker
 npm install
 ```
+
+## Login + Cloud Backup (Neon)
+
+The app works fully offline without an account. Signing in (Settings -> Account & Cloud Backup) enables automatic cloud backup: every data/settings change is pushed to Neon Postgres a few seconds later, and data can be restored from the cloud on any device.
+
+### One-time setup
+
+1. Create a free database at [neon.tech](https://neon.tech) and copy its connection string.
+2. In the Vercel project settings, add these environment variables (see `.env.example`):
+   - `DATABASE_URL`: the Neon connection string
+   - `JWT_SECRET`: a long random string (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`)
+3. Redeploy. The API creates its tables (`app_users`, `user_backups`) automatically on first use.
+
+### How it works
+
+- `api/auth.ts`: register/login with scrypt-hashed passwords, returns a signed token (30-day expiry)
+- `api/backup.ts`: stores one backup JSON per user (upsert), fetched on restore
+- Sign-in flow: if a cloud backup exists you choose to restore it or keep local data; while signed in, changes are auto-backed up (debounced)
+
+### Local development with the API
+
+`npm run dev` serves only the web app. To run the serverless functions locally use the Vercel CLI with a `.env` file (copy `.env.example`):
+
+```bash
+npx vercel dev
+```
+
+### Android builds
+
+The native app needs to know where the API lives. Set `VITE_API_BASE_URL` to the deployed URL before building:
+
+```bash
+VITE_API_BASE_URL=https://your-app.vercel.app npm run build:apk
+```
+
+(On Windows PowerShell: `$env:VITE_API_BASE_URL = "https://your-app.vercel.app"; npm run build:apk`)
 
 ## Run PWA Locally (Debug)
 

@@ -3,6 +3,8 @@ import { CheckCircle2 } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AddictionProvider, useAddictions } from './context/AddictionContext';
 import { AppSettingsProvider, useAppSettings } from './context/AppSettingsContext';
+import { AuthProvider } from './context/AuthContext';
+import { CloudSyncProvider } from './context/CloudSyncContext';
 import { Addiction } from './types';
 import Header from './components/Header';
 import AddAddictionButton from './components/AddAddictionButton';
@@ -218,7 +220,11 @@ function App() {
     <AppSettingsProvider>
       <ThemeProvider>
         <AddictionProvider>
-          <AppContent />
+          <AuthProvider>
+            <CloudSyncProvider>
+              <AppContent />
+            </CloudSyncProvider>
+          </AuthProvider>
         </AddictionProvider>
       </ThemeProvider>
     </AppSettingsProvider>
