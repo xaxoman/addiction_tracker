@@ -6,7 +6,9 @@ name: Build Android APK
 on:
   workflow_dispatch: {}
   push:
-    branches: [main]
+    branches:
+      - main
+      - claude/project-analysis-ui-screenshots-f0drep
     tags: ['v*']
 
 permissions:
