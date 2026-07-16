@@ -22,8 +22,10 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
     reconcileAfterSignIn
   } = useCloudSync();
   const { t } = useI18n();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const [isCloudBusy, setIsCloudBusy] = useState(false);
 
   if (!isOpen) return null;
@@ -46,33 +48,35 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
     return t('cloudGenericError');
   };
 
-  const handleAuth = async (mode: 'login' | 'register') => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     const email = authEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      alert(t('invalidEmail'));
+      setFormError(t('invalidEmail'));
       return;
     }
     if (authPassword.length < 8) {
-      alert(t('passwordTooShort'));
+      setFormError(t('passwordTooShort'));
       return;
     }
 
+    setFormError(null);
     setIsCloudBusy(true);
     try {
-      const freshSession = mode === 'login'
+      const freshSession = mode === 'signin'
         ? await login(email, authPassword)
         : await register(email, authPassword);
 
-      const result = await reconcileAfterSignIn(freshSession, (backupCreatedAt) =>
+      await reconcileAfterSignIn(freshSession, (backupCreatedAt) =>
         window.confirm(`${t('cloudRestorePrompt')}\n(${new Date(backupCreatedAt).toLocaleString()})`)
       );
 
       setAuthEmail('');
       setAuthPassword('');
-      alert(result === 'restored' ? t('cloudRestoreSuccess') : t('cloudBackupSuccess'));
     } catch (error) {
       console.error('Cloud sign-in failed:', error);
-      alert(cloudErrorMessage(error));
+      setFormError(cloudErrorMessage(error));
     } finally {
       setIsCloudBusy(false);
     }
@@ -213,12 +217,14 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col items-center text-center gap-3 pb-2">
               <div className="w-14 h-14 bg-sky-100 dark:bg-sky-900/30 rounded-full flex items-center justify-center">
                 <Cloud className="w-7 h-7 text-sky-600 dark:text-sky-400" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{t('cloudAccountDesc')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {mode === 'signin' ? t('cloudAccountDesc') : t('cloudAccountSignUpDesc')}
+              </p>
             </div>
 
             <input
@@ -227,6 +233,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
               onChange={(event) => setAuthEmail(event.target.value)}
               placeholder={t('accountEmail')}
               autoComplete="email"
+              required
               className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
             />
 
@@ -235,32 +242,38 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
               value={authPassword}
               onChange={(event) => setAuthPassword(event.target.value)}
               placeholder={t('accountPassword')}
-              autoComplete="current-password"
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              required
+              minLength={8}
               className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
             />
 
+            {formError && (
+              <p className="text-sm text-red-600 dark:text-red-400 text-center" role="alert">
+                {formError}
+              </p>
+            )}
+
             <button
-              onClick={() => handleAuth('login')}
+              type="submit"
               disabled={isCloudBusy}
               className="w-full p-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t('signIn')}
+              {isCloudBusy ? t('pleaseWait') : mode === 'signin' ? t('signIn') : t('createAccount')}
             </button>
-
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs uppercase text-gray-400 dark:text-gray-500">{t('or')}</span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-            </div>
 
             <button
-              onClick={() => handleAuth('register')}
+              type="button"
+              onClick={() => {
+                setMode(mode === 'signin' ? 'signup' : 'signin');
+                setFormError(null);
+              }}
               disabled={isCloudBusy}
-              className="w-full p-3 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-sm text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
             >
-              {t('createAccount')}
+              {mode === 'signin' ? t('switchToSignUp') : t('switchToSignIn')}
             </button>
-          </div>
+          </form>
         )}
       </div>
     </div>,
