@@ -43,6 +43,10 @@ jobs:
         run: npm ci
 
       - name: Build web assets
+        env:
+          # Public URL of the deployed app/API, baked into the native build so
+          # the Capacitor APK can reach the backend (login + cloud backup).
+          VITE_API_BASE_URL: https://addiction-tracker-two.vercel.app
         run: npm run build
 
       - name: Sync Capacitor Android project
