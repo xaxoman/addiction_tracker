@@ -137,10 +137,12 @@ const AppContent = () => {
     }
   };
 
-  const handleReset = async (id: string) => {
+  const handleReset = async (id: string, date: Date, note?: string) => {
     // Provide haptic feedback on reset
     await capacitorService.vibrate();
-    resetLastEngaged(id, new Date());
+    // Honor the date/time (and optional note) chosen in the reset dialog.
+    // Fall back to now only if no date was provided.
+    resetLastEngaged(id, date ?? new Date(), note);
   };
 
   const handleTabChange = async (tab: AppTab) => {

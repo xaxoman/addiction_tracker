@@ -34,18 +34,42 @@ const formatMinutesSaved = (totalMinutes: number): string => {
   return `${minutes}m`;
 };
 
+// Local-time (not UTC) formatting for the date/time inputs. Using
+// toISOString() here would format in UTC, which can show the wrong day near
+// midnight for users whose timezone differs from UTC.
+const toDateInputValue = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const toTimeInputValue = (date: Date): string => {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
 const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdit, onDelete }) => {
   const { t } = useI18n();
   const [timeSince, setTimeSince] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [resetDate, setResetDate] = useState(new Date().toISOString().split('T')[0]);
-  const [resetTime, setResetTime] = useState(
-    new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-  );
+  const [resetDate, setResetDate] = useState(() => toDateInputValue(new Date()));
+  const [resetTime, setResetTime] = useState(() => toTimeInputValue(new Date()));
   const [resetNote, setResetNote] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Open the reset dialog with the date/time fields freshly defaulted to "now"
+  // (in local time) so stale values from a previous open don't linger.
+  const openResetDialog = () => {
+    const now = new Date();
+    setResetDate(toDateInputValue(now));
+    setResetTime(toTimeInputValue(now));
+    setResetNote('');
+    setShowResetDialog(true);
+  };
 
   useEffect(() => {
     const updateTimeSince = () => {
@@ -79,9 +103,15 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
   }, []);
 
   const handleResetConfirm = () => {
+    // Build the timestamp from the picked local date + time components.
+    // `new Date(resetDate)` would parse the "YYYY-MM-DD" string as UTC
+    // midnight and could land on the wrong day once the local time is applied.
+    const [year, month, day] = resetDate.split('-').map(Number);
     const [hours, minutes] = resetTime.split(':').map(Number);
-    const resetDateTime = new Date(resetDate);
-    resetDateTime.setHours(hours, minutes);
+    const resetDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    if (isNaN(resetDateTime.getTime())) {
+      return; // Guard against incomplete/invalid input
+    }
     onReset(addiction.id, resetDateTime, resetNote.trim() || undefined);
     setShowResetDialog(false);
     setResetNote('');
@@ -409,7 +439,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
             </div>
             
             <button
-              onClick={() => setShowResetDialog(true)}
+              onClick={openResetDialog}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
                        bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
                        hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
@@ -446,7 +476,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                     type="date"
                     value={resetDate}
                     onChange={(e) => setResetDate(e.target.value)}
-                    max={new Date().toISOString().split('T')[0]}
+                    max={toDateInputValue(new Date())}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
                               focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
