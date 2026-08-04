@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Cloud, UploadCloud, DownloadCloud, LogOut } from 'lucide-react';
+import { X, Cloud, CloudOff, CheckCircle2, RefreshCw, AlertTriangle, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useCloudSync } from '../context/CloudSyncContext';
+import { useCloudSync, CloudSyncStatus } from '../context/CloudSyncContext';
 import { CloudSyncError } from '../services/cloudSync';
 import { useI18n } from '../i18n/useI18n';
 
@@ -13,19 +13,13 @@ interface AccountDialogProps {
 
 const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
   const { session, login, register, logout } = useAuth();
-  const {
-    status: cloudStatus,
-    lastCloudBackupAt,
-    backupNow,
-    fetchRemoteBackup,
-    applyCloudBackup,
-    reconcileAfterSignIn
-  } = useCloudSync();
+  const { status: cloudStatus, lastSyncedAt, flushPendingChanges, reconcileAfterSignIn } = useCloudSync();
   const { t } = useI18n();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isCloudBusy, setIsCloudBusy] = useState(false);
 
   if (!isOpen) return null;
@@ -62,15 +56,19 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
     }
 
     setFormError(null);
+    setNotice(null);
     setIsCloudBusy(true);
     try {
       const freshSession = mode === 'signin'
         ? await login(email, authPassword)
         : await register(email, authPassword);
 
-      await reconcileAfterSignIn(freshSession, (backupCreatedAt) =>
+      const outcome = await reconcileAfterSignIn(freshSession, (backupCreatedAt) =>
         window.confirm(`${t('cloudRestorePrompt')}\n(${new Date(backupCreatedAt).toLocaleString()})`)
       );
+      if (outcome === 'restored') {
+        setNotice(t('cloudRestoreSuccess'));
+      }
 
       setAuthEmail('');
       setAuthPassword('');
@@ -82,59 +80,65 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleCloudBackupNow = async () => {
+  const handleSignOut = async () => {
+    if (!window.confirm(t('signOutConfirm'))) {
+      return;
+    }
+
     setIsCloudBusy(true);
     try {
-      await backupNow();
-      alert(t('cloudBackupSuccess'));
-    } catch (error) {
-      console.error('Cloud backup failed:', error);
-      alert(cloudErrorMessage(error));
+      // Make sure edits that are still waiting on the debounce reach the cloud.
+      await flushPendingChanges();
     } finally {
       setIsCloudBusy(false);
-    }
-  };
-
-  const handleCloudRestore = async () => {
-    setIsCloudBusy(true);
-    try {
-      const { backup } = await fetchRemoteBackup();
-      if (!backup) {
-        alert(t('noCloudBackupYet'));
-        return;
-      }
-
-      const confirmed = window.confirm(
-        `${t('cloudRestorePrompt')}\n(${new Date(backup.createdAt).toLocaleString()})`
-      );
-      if (!confirmed) {
-        return;
-      }
-
-      applyCloudBackup(backup);
-      alert(t('cloudRestoreSuccess'));
-    } catch (error) {
-      console.error('Cloud restore failed:', error);
-      alert(cloudErrorMessage(error));
-    } finally {
-      setIsCloudBusy(false);
-    }
-  };
-
-  const handleSignOut = () => {
-    if (window.confirm(t('signOutConfirm'))) {
+      setNotice(null);
       logout();
     }
   };
 
-  const cloudStatusText =
-    cloudStatus === 'syncing'
-      ? t('cloudSyncing')
-      : cloudStatus === 'error'
-        ? t('cloudSyncError')
-        : lastCloudBackupAt
-          ? new Date(lastCloudBackupAt).toLocaleString()
-          : t('noCloudBackupYet');
+  const syncAppearance: Record<
+    Exclude<CloudSyncStatus, 'disabled'>,
+    { icon: React.ElementType; label: string; iconClass: string; boxClass: string; textClass: string }
+  > = {
+    syncing: {
+      icon: RefreshCw,
+      label: t('cloudSyncing'),
+      iconClass: 'text-sky-600 dark:text-sky-300 animate-spin',
+      boxClass: 'bg-sky-50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-900/40',
+      textClass: 'text-sky-900 dark:text-sky-100'
+    },
+    pending: {
+      icon: Cloud,
+      label: t('cloudSyncPending'),
+      iconClass: 'text-sky-600 dark:text-sky-300',
+      boxClass: 'bg-sky-50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-900/40',
+      textClass: 'text-sky-900 dark:text-sky-100'
+    },
+    synced: {
+      icon: CheckCircle2,
+      label: t('cloudSyncSynced'),
+      iconClass: 'text-emerald-600 dark:text-emerald-400',
+      boxClass: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/40',
+      textClass: 'text-emerald-900 dark:text-emerald-100'
+    },
+    offline: {
+      icon: CloudOff,
+      label: t('cloudSyncOffline'),
+      iconClass: 'text-amber-600 dark:text-amber-400',
+      boxClass: 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/40',
+      textClass: 'text-amber-900 dark:text-amber-100'
+    },
+    error: {
+      icon: AlertTriangle,
+      label: t('cloudSyncError'),
+      iconClass: 'text-red-600 dark:text-red-400',
+      boxClass: 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/40',
+      textClass: 'text-red-900 dark:text-red-100'
+    }
+  };
+
+  const sync = syncAppearance[cloudStatus === 'disabled' ? 'syncing' : cloudStatus];
+  const SyncIcon = sync.icon;
 
   return createPortal(
     <div
@@ -167,54 +171,32 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            <div className="p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-900/40 rounded-lg">
+            {notice && (
+              <p className="text-sm text-emerald-700 dark:text-emerald-300 text-center">{notice}</p>
+            )}
+
+            <div className={`p-4 border rounded-lg ${sync.boxClass}`}>
               <div className="flex items-start gap-3">
-                <Cloud className="w-4 h-4 mt-0.5 text-sky-700 dark:text-sky-300" />
-                <div className="text-sm text-sky-900 dark:text-sky-100">
-                  <p>{t('cloudAutoBackupDesc')}</p>
-                  <p className="mt-1">
-                    <span className="font-medium">{t('lastCloudBackup')}:</span> {cloudStatusText}
+                <SyncIcon className={`w-4 h-4 mt-0.5 shrink-0 ${sync.iconClass}`} />
+                <div className={`text-sm ${sync.textClass}`} aria-live="polite">
+                  <p className="font-medium">{sync.label}</p>
+                  <p className="mt-1 opacity-90">{t('cloudAutoSyncDesc')}</p>
+                  <p className="mt-1 opacity-90">
+                    <span className="font-medium">{t('lastSynced')}:</span>{' '}
+                    {lastSyncedAt ? new Date(lastSyncedAt).toLocaleString() : t('cloudNeverSynced')}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                onClick={handleCloudBackupNow}
-                disabled={isCloudBusy}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="w-10 h-10 bg-sky-100 dark:bg-sky-900/30 rounded-lg flex items-center justify-center">
-                  <UploadCloud className="w-5 h-5 text-sky-600 dark:text-sky-400" />
-                </div>
-                <div className="text-left flex-1">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('cloudBackupNow')}</div>
-                </div>
-              </button>
-
-              <button
-                onClick={handleCloudRestore}
-                disabled={isCloudBusy}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg flex items-center justify-center">
-                  <DownloadCloud className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                </div>
-                <div className="text-left flex-1">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('cloudRestore')}</div>
-                </div>
-              </button>
-
-              <button
-                onClick={handleSignOut}
-                disabled={isCloudBusy}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>{t('signOut')}</span>
-              </button>
-            </div>
+            <button
+              onClick={handleSignOut}
+              disabled={isCloudBusy}
+              className="w-full flex items-center justify-center gap-2 p-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>{isCloudBusy ? t('pleaseWait') : t('signOut')}</span>
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

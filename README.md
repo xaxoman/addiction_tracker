@@ -10,7 +10,7 @@ A Progressive Web App (PWA) and Capacitor mobile app to track addictions, visual
 - Dark and light theme
 - Data export (CSV/TSV)
 - JSON backup/import flow with last-backup info
-- Optional account (email + password) with automatic cloud backup to Neon Postgres
+- Optional account (email + password) with automatic two-way cloud sync to Neon Postgres
 
 ## Tech Stack
 
@@ -19,7 +19,7 @@ A Progressive Web App (PWA) and Capacitor mobile app to track addictions, visual
 - Tailwind CSS
 - Capacitor (Android)
 - Workbox (PWA)
-- Vercel serverless functions + Neon Postgres (login + cloud backup)
+- Vercel serverless functions + Neon Postgres (login + cloud sync)
 
 ## Prerequisites
 
@@ -36,9 +36,9 @@ cd addiction_tracker
 npm install
 ```
 
-## Login + Cloud Backup (Neon)
+## Login + Cloud Sync (Neon)
 
-The app works fully offline without an account. Signing in (Settings -> Account & Cloud Backup) enables automatic cloud backup: every data/settings change is pushed to Neon Postgres a few seconds later, and data can be restored from the cloud on any device.
+The app works fully offline without an account. Signing in (Settings -> Account & Cloud Sync) turns on two-way sync with Neon Postgres, with no buttons to press: every data/settings change is pushed a couple of seconds later, and newer data from another device is pulled in on launch, on focus/app resume, when the connection returns, and every 5 minutes while the app stays open.
 
 ### One-time setup
 
@@ -51,8 +51,9 @@ The app works fully offline without an account. Signing in (Settings -> Account 
 ### How it works
 
 - `api/auth.ts`: register/login with scrypt-hashed passwords, returns a signed token (30-day expiry)
-- `api/backup.ts`: stores one backup JSON per user (upsert), fetched on restore
-- Sign-in flow: if a cloud backup exists you choose to restore it or keep local data; while signed in, changes are auto-backed up (debounced)
+- `api/backup.ts`: stores one backup JSON per user (upsert), fetched on every pull
+- Sign-in flow: if a cloud copy exists and differs from the local data, you choose once whether to restore it or keep local data
+- After that it is automatic: local edits are pushed (debounced), and a pull adopts the cloud copy whenever its server-side `updated_at` is newer than this device's last sync, i.e. another device wrote it
 
 ### Local development with the API
 

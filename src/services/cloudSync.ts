@@ -91,11 +91,17 @@ export const fetchCloudBackup = async (
   return { backup: data.backup ?? null, updatedAt: data.updatedAt ?? null };
 };
 
-export const pushCloudBackup = async (token: string, backup: AppBackup): Promise<string> => {
+// `keepalive` lets a push started while the app is closing outlive the page.
+export const pushCloudBackup = async (
+  token: string,
+  backup: AppBackup,
+  options: { keepalive?: boolean } = {}
+): Promise<string> => {
   const data = (await request('/api/backup', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ backup })
+    body: JSON.stringify({ backup }),
+    keepalive: options.keepalive
   })) as { updatedAt?: string };
 
   return data.updatedAt ?? new Date().toISOString();
