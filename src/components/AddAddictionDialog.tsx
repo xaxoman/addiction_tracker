@@ -18,6 +18,7 @@ interface AddAddictionDialogProps {
       value: number;
       unit?: 'hours' | 'days' | 'weeks' | 'months' | 'dollars';
     };
+    note?: string;
   }) => void;
   editingAddiction?: Addiction | null;
 }
@@ -40,6 +41,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
   const [goalType, setGoalType] = useState<'time' | 'money'>('time');
   const [goalValue, setGoalValue] = useState('');
   const [goalUnit, setGoalUnit] = useState<'hours' | 'days' | 'weeks' | 'months' | 'dollars'>('days');
+  const [note, setNote] = useState('');
 
   useEffect(() => {
     if (editingAddiction) {
@@ -68,6 +70,9 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
         setGoalValue(goalValueStr);
         setGoalUnit(editingAddiction.goal.unit || 'days');
       }
+      setNote(editingAddiction.note || '');
+    } else {
+      setNote('');
     }
   }, [editingAddiction]);
 
@@ -105,7 +110,8 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
         type: goalType,
         value: parsedGoalValue,
         unit: goalUnit
-      }
+      },
+      note: note.trim()
     });
     
     setName('');
@@ -117,6 +123,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
     setGoalType('time');
     setGoalValue('');
     setGoalUnit('days');
+    setNote('');
     
     onClose();
   };
@@ -128,8 +135,8 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl animate-fade-in-up">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl animate-fade-in-up">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {editingAddiction ? t('editAddiction') : t('addNewAddiction')}
@@ -303,6 +310,25 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
             </div>
           </div>
           
+          <div className="mb-6">
+            <label htmlFor="habitNote" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('habitNotes')}
+            </label>
+            <textarea
+              id="habitNote"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t('habitNotesPlaceholder')}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400
+                        resize-none h-24"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('habitNotesHint')}
+            </p>
+          </div>
+
           <div className="flex justify-end gap-2">
             <button
               type="button"

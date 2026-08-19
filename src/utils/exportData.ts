@@ -13,6 +13,7 @@ export interface ExportDataRow {
   goalUnit: string;
   currentStreak: number;
   totalSaved: number;
+  habitNote: string;
   relapseDate?: string;
   relapseTime?: string;
   relapseNote?: string;
@@ -83,7 +84,8 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
       goalValue: addiction.goal?.value || 0,
       goalUnit: addiction.goal?.unit || 'N/A',
       currentStreak: calculateCurrentStreak(addiction.lastEngaged),
-      totalSaved: calculateTotalSaved(addiction)
+      totalSaved: calculateTotalSaved(addiction),
+      habitNote: addiction.note || ''
     };
 
     // If there are no relapses, add one row with the base data
@@ -127,6 +129,7 @@ export const convertToCSV = (data: ExportDataRow[]): string => {
     'Goal Unit',
     'Current Streak (Days)',
     'Total Saved',
+    'Notes',
     'Relapse Date',
     'Relapse Time',
     'Relapse Note'
@@ -147,6 +150,7 @@ export const convertToCSV = (data: ExportDataRow[]): string => {
       `"${row.goalUnit}"`,
       row.currentStreak,
       row.totalSaved.toFixed(2),
+      `"${row.habitNote.replace(/"/g, '""')}"`,
       row.relapseDate ? `"${row.relapseDate}"` : '',
       row.relapseTime ? `"${row.relapseTime}"` : '',
       row.relapseNote ? `"${row.relapseNote.replace(/"/g, '""')}"` : ''
@@ -195,6 +199,7 @@ export const convertToTSV = (data: ExportDataRow[]): string => {
     'Goal Unit',
     'Current Streak (Days)',
     'Total Saved',
+    'Notes',
     'Relapse Date',
     'Relapse Time',
     'Relapse Note'
@@ -214,6 +219,7 @@ export const convertToTSV = (data: ExportDataRow[]): string => {
       row.goalUnit,
       row.currentStreak,
       row.totalSaved.toFixed(2),
+      row.habitNote,
       row.relapseDate || '',
       row.relapseTime || '',
       row.relapseNote || ''

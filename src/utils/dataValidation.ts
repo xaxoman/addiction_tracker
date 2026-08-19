@@ -21,6 +21,25 @@ export const validateDate = (date: any): Date => {
   return dateObj;
 };
 
+// Same as validateDate, but keeps "not set" distinguishable from "invalid":
+// used for optional fields where falling back to "now" would be misleading.
+export const validateOptionalDate = (date: unknown): Date | undefined => {
+  if (typeof date !== 'string' && typeof date !== 'number' && !(date instanceof Date)) {
+    return undefined;
+  }
+  const dateObj = new Date(date);
+  return isNaN(dateObj.getTime()) ? undefined : dateObj;
+};
+
+// Relapse entries created before ids existed still need a stable identity so
+// they can be edited or deleted individually.
+export const createRelapseId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `relapse-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export const validateString = (value: any, fallback: string = ''): string => {
   if (typeof value === 'string' && value.trim().length > 0) {
     return value.trim();
@@ -54,9 +73,12 @@ export const sanitizeAddictionData = (data: any) => {
     lastEngaged: validateDate(data.lastEngaged),
     createdAt: validateDate(data.createdAt),
     goal: validateGoal(data.goal),
+    note: validateString(data.note),
     notes: Array.isArray(data.notes) ? data.notes.map((note: any) => ({
-      date: validateDate(note.date),
-      text: validateString(note.text)
+      id: validateString(note?.id) || createRelapseId(),
+      date: validateDate(note?.date),
+      text: validateString(note?.text),
+      previousLastEngaged: validateOptionalDate(note?.previousLastEngaged)
     })) : []
   };
 };

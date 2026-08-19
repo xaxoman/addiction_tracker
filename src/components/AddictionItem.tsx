@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { MoreVertical, RefreshCw, Edit, Trash2, X, Calendar, ChevronLeft, ChevronRight, Download } from 'lucide-react';
-import { Addiction } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { MoreVertical, RefreshCw, Edit, Trash2, X, Calendar, ChevronLeft, ChevronRight, Download, StickyNote } from 'lucide-react';
+import { Addiction, RelapseEntry } from '../types';
 import ProgressCircle from './ProgressCircle';
 import { exportSingleAddictionToCSV } from '../utils/exportData';
 import { useI18n } from '../i18n/useI18n';
@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/useI18n';
 interface AddictionItemProps {
   addiction: Addiction;
   onReset: (id: string, date: Date, note?: string) => void;
+  onDeleteRelapse: (id: string, relapseId: string) => void;
   onEdit: (addiction: Addiction) => void;
   onDelete: (id: string) => void;
 }
@@ -50,8 +51,9 @@ const toTimeInputValue = (date: Date): string => {
   return `${hours}:${minutes}`;
 };
 
-const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdit, onDelete }) => {
-  const { t } = useI18n();
+const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onDeleteRelapse, onEdit, onDelete }) => {
+  const { t, language } = useI18n();
+  const locale = language === 'it' ? 'it-IT' : 'en-US';
   const [timeSince, setTimeSince] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -60,6 +62,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
   const [resetTime, setResetTime] = useState(() => toTimeInputValue(new Date()));
   const [resetNote, setResetNote] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   // Open the reset dialog with the date/time fields freshly defaulted to "now"
   // (in local time) so stale values from a previous open don't linger.
@@ -69,6 +72,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
     setResetTime(toTimeInputValue(now));
     setResetNote('');
     setShowResetDialog(true);
+  };
+
+  // Always open the history on the current month with no day selected, so the
+  // dialog never reopens on a stale selection.
+  const openHistoryDialog = () => {
+    setCurrentMonth(new Date());
+    setSelectedDay(null);
+    setShowHistoryDialog(true);
   };
 
   useEffect(() => {
@@ -263,30 +274,73 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
     return days;
   };
 
-  const hasRelapseOnDay = (day: number) => {
-    if (!addiction.notes || !Array.isArray(addiction.notes)) return false;
-    
-    return addiction.notes.some(note => {
+  // Relapses of the visible month, bucketed by day-of-month. The grid only ever
+  // renders a counter from this map: the details themselves live in the panel
+  // below the calendar so nothing overflows a day cell.
+  const relapsesByDay = useMemo(() => {
+    const grouped = new Map<number, RelapseEntry[]>();
+
+    (Array.isArray(addiction.notes) ? addiction.notes : []).forEach(note => {
       const noteDate = new Date(note.date);
-      if (isNaN(noteDate.getTime())) return false; // Invalid date
-      
-      return noteDate.getFullYear() === currentMonth.getFullYear() &&
-             noteDate.getMonth() === currentMonth.getMonth() &&
-             noteDate.getDate() === day;
+      if (isNaN(noteDate.getTime())) return; // Invalid date
+
+      if (noteDate.getFullYear() !== currentMonth.getFullYear() ||
+          noteDate.getMonth() !== currentMonth.getMonth()) {
+        return;
+      }
+
+      const day = noteDate.getDate();
+      const entries = grouped.get(day) || [];
+      entries.push(note);
+      grouped.set(day, entries);
     });
+
+    grouped.forEach(entries => {
+      entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    });
+
+    return grouped;
+  }, [addiction.notes, currentMonth]);
+
+  // Most recent first, on a copy so the stored order (which the streak anchor
+  // depends on) is never mutated.
+  const relapsesNewestFirst = useMemo(() => {
+    return [...(Array.isArray(addiction.notes) ? addiction.notes : [])]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [addiction.notes]);
+
+  // Weekday headers in the app language. 2023-01-01 was a Sunday, so walking a
+  // week from there lines the labels up with the Sunday-first grid.
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    return Array.from({ length: 7 }, (_, index) => formatter.format(new Date(2023, 0, 1 + index)));
+  }, [locale]);
+
+  const selectedDayRelapses = selectedDay === null
+    ? []
+    : relapsesByDay.get(selectedDay) || [];
+
+  const selectedDayLabel = selectedDay === null
+    ? ''
+    : new Date(currentMonth.getFullYear(), currentMonth.getMonth(), selectedDay)
+        .toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Build a new Date instead of mutating the one held in state, which would
+  // make React skip the re-render for repeated month steps.
+  const changeMonth = (offset: number) => {
+    setSelectedDay(null);
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
   };
 
-  const getRelapsesForDay = (day: number) => {
-    if (!addiction.notes || !Array.isArray(addiction.notes)) return [];
-    
-    return addiction.notes.filter(note => {
-      const noteDate = new Date(note.date);
-      if (isNaN(noteDate.getTime())) return false; // Invalid date
-      
-      return noteDate.getFullYear() === currentMonth.getFullYear() &&
-             noteDate.getMonth() === currentMonth.getMonth() &&
-             noteDate.getDate() === day;
-    });
+  const isToday = (day: number): boolean => {
+    const today = new Date();
+    return today.getFullYear() === currentMonth.getFullYear() &&
+           today.getMonth() === currentMonth.getMonth() &&
+           today.getDate() === day;
+  };
+
+  const formatRelapseTime = (date: Date | string): string => {
+    return new Date(date).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   };
 
   const handleExportData = () => {
@@ -345,7 +399,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
                             py-1 z-10">
                 <button
                   onClick={() => {
-                    setShowHistoryDialog(true);
+                    openHistoryDialog();
                     setIsMenuOpen(false);
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
@@ -389,6 +443,15 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
           </div>
         </div>
         
+        {addiction.note && (
+          <div className="mb-6 flex items-start gap-2 rounded-lg p-3 
+                        bg-amber-50 dark:bg-amber-900/20 
+                        text-sm text-amber-900 dark:text-amber-200">
+            <StickyNote size={16} className="mt-0.5 shrink-0" />
+            <p className="whitespace-pre-wrap break-words">{addiction.note}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 max-[450px]:grid-cols-1 gap-6 max-[450px]:gap-2 mb-6">
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
@@ -536,8 +599,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
       )}
 
       {showHistoryDialog && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl animate-fade-in-up">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {t('relapseHistory')}
@@ -553,92 +616,162 @@ const AddictionItem: React.FC<AddictionItemProps> = ({ addiction, onReset, onEdi
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <button
-                  onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
+                  onClick={() => changeMonth(-1)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  aria-label={t('previousMonth')}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                  {currentMonth.toLocaleString(locale, { month: 'long', year: 'numeric' })}
                 </h3>
                 <button
-                  onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
+                  onClick={() => changeMonth(1)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  aria-label={t('nextMonth')}
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="grid grid-cols-7 gap-1 mb-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-                    {day}
+                {weekdayLabels.map(label => (
+                  <div key={label} className="text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {label}
                   </div>
                 ))}
               </div>
 
               <div className="grid grid-cols-7 gap-1">
-                {generateCalendarDays().map((day, index) => (
-                  <div
-                    key={index}
-                    className={`aspect-square p-2 rounded-lg ${
-                      day === null
-                        ? 'bg-transparent'
-                        : hasRelapseOnDay(day)
-                        ? 'bg-red-100 dark:bg-red-900/30'
-                        : 'bg-gray-50 dark:bg-gray-700/50'
-                    }`}
-                  >
-                    {day !== null && (
-                      <div className="h-full">
-                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {day}
-                        </div>
-                        {hasRelapseOnDay(day) && (
-                          <div className="mt-1">
-                            {getRelapsesForDay(day).map((relapse, i) => (
-                              <div
-                                key={i}
-                                className="text-xs text-red-600 dark:text-red-400 truncate"
-                                title={relapse.text || t('noNote')}
-                              >
-                                {new Date(relapse.date).toLocaleTimeString([], { 
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {generateCalendarDays().map((day, index) => {
+                  if (day === null) {
+                    return <div key={`empty-${index}`} className="aspect-square" />;
+                  }
+
+                  const relapseCount = (relapsesByDay.get(day) || []).length;
+                  const isSelected = selectedDay === day;
+
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setSelectedDay(isSelected ? null : day)}
+                      aria-pressed={isSelected}
+                      aria-label={`${day} - ${relapseCount} ${t('relapses')}`}
+                      className={`aspect-square rounded-lg flex flex-col items-center justify-center gap-1 
+                                transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        relapseCount > 0
+                          ? 'bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50'
+                          : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      } ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                    >
+                      <span className={`text-sm leading-none ${
+                        isToday(day)
+                          ? 'font-bold text-blue-600 dark:text-blue-400'
+                          : 'font-medium text-gray-700 dark:text-gray-300'
+                      }`}>
+                        {day}
+                      </span>
+                      {relapseCount > 0 && (
+                        relapseCount > 1 ? (
+                          <span className="min-w-[1.05rem] px-1 rounded-full bg-red-500 dark:bg-red-600 
+                                         text-[0.625rem] leading-4 font-semibold text-white">
+                            {relapseCount}
+                          </span>
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400" />
+                        )
+                      )}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
+
+            <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              {selectedDay === null ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('selectDayHint')}
+                </p>
+              ) : (
+                <>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 first-letter:uppercase">
+                    {selectedDayLabel}
+                  </h4>
+                  {selectedDayRelapses.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {t('noRelapsesOnDay')}
+                    </p>
+                  ) : (
+                    <ul className="space-y-2 max-h-48 overflow-y-auto">
+                      {selectedDayRelapses.map(relapse => (
+                        <li
+                          key={relapse.id}
+                          className="flex items-start justify-between gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {formatRelapseTime(relapse.date)}
+                            </div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words whitespace-pre-wrap">
+                              {relapse.text || t('noNote')}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onDeleteRelapse(addiction.id, relapse.id)}
+                            className="shrink-0 p-2 rounded-lg text-red-600 dark:text-red-400 
+                                     hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                            aria-label={t('deleteRelapse')}
+                            title={t('deleteRelapse')}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('recentRelapses')}
               </h4>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {addiction.notes?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map((note, index) => (
+              {relapsesNewestFirst.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('noRelapsesRecorded')}
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {relapsesNewestFirst.map(note => (
                     <div
-                      key={index}
-                      className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
+                      key={note.id}
+                      className="flex items-start justify-between gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
                     >
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {new Date(note.date).toLocaleString()}
-                      </div>
-                      {note.text && (
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {note.text}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {new Date(note.date).toLocaleString(locale)}
                         </div>
-                      )}
+                        {note.text && (
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words whitespace-pre-wrap">
+                            {note.text}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => onDeleteRelapse(addiction.id, note.id)}
+                        className="shrink-0 p-2 rounded-lg text-red-600 dark:text-red-400 
+                                 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                        aria-label={t('deleteRelapse')}
+                        title={t('deleteRelapse')}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

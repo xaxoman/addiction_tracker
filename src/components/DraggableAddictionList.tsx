@@ -5,6 +5,7 @@ import AddictionItem from './AddictionItem';
 interface DraggableAddictionListProps {
   addictions: Addiction[];
   onReset: (id: string, date: Date, note?: string) => void;
+  onDeleteRelapse: (id: string, relapseId: string) => void;
   onReorder: (startIndex: number, endIndex: number) => void;
   onEdit: (addiction: Addiction) => void;
   onDelete: (id: string) => void;
@@ -13,6 +14,7 @@ interface DraggableAddictionListProps {
 const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({ 
   addictions, 
   onReset,
+  onDeleteRelapse,
   onReorder,
   onEdit,
   onDelete
@@ -79,6 +81,7 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
           <AddictionItem 
             addiction={addiction} 
             onReset={onReset}
+            onDeleteRelapse={onDeleteRelapse}
             onEdit={onEdit}
             onDelete={onDelete}
           />

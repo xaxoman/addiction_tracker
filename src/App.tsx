@@ -21,7 +21,7 @@ import { startDailyCheckInScheduler } from './services/checkInNotifications';
 import { useI18n } from './i18n/useI18n';
 
 const AppContent = () => {
-  const { addictions, addAddiction, removeAddiction, updateAddiction, resetLastEngaged, reorderAddictions } = useAddictions();
+  const { addictions, addAddiction, removeAddiction, updateAddiction, resetLastEngaged, deleteRelapse, reorderAddictions } = useAddictions();
   const { theme } = useTheme();
   const { dailyCheckInEnabled, dailyCheckInTime } = useAppSettings();
   const { t } = useI18n();
@@ -118,7 +118,8 @@ const AppContent = () => {
         cost: data.cost,
         costType: data.costType,
         lastEngaged: data.lastEngaged,
-        goal: data.goal
+        goal: data.goal,
+        note: data.note
       });
     }
     setIsDialogOpen(false);
@@ -145,6 +146,14 @@ const AppContent = () => {
     resetLastEngaged(id, date ?? new Date(), note);
   };
 
+  const handleDeleteRelapse = async (id: string, relapseId: string) => {
+    if (!window.confirm(t('deleteRelapseConfirm'))) {
+      return;
+    }
+    await capacitorService.vibrate();
+    deleteRelapse(id, relapseId);
+  };
+
   const handleTabChange = async (tab: AppTab) => {
     setActiveTab(tab);
     await capacitorService.vibrate();
@@ -163,6 +172,7 @@ const AppContent = () => {
                 <DraggableAddictionList
                   addictions={addictions}
                   onReset={handleReset}
+                  onDeleteRelapse={handleDeleteRelapse}
                   onReorder={reorderAddictions}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
