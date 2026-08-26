@@ -1,4 +1,4 @@
-import { Addiction, ThemeMode } from '../types';
+import { Addiction, DailyCheckIn, ThemeMode } from '../types';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 
@@ -16,6 +16,9 @@ export interface AppBackup {
   source: 'auto' | 'manual';
   data: {
     addictions: Addiction[];
+    // Optional: backups written before daily check-ins existed have no series,
+    // and importing one must not wipe the local one.
+    checkIns?: DailyCheckIn[];
     settings: {
       theme: ThemeMode;
       language: string;
@@ -43,7 +46,8 @@ export const getBackupFilename = (createdAt: Date): string => {
 export const buildBackupPayload = (
   addictions: Addiction[],
   theme: ThemeMode,
-  source: 'auto' | 'manual'
+  source: 'auto' | 'manual',
+  checkIns: DailyCheckIn[] = []
 ): AppBackup => {
   return {
     version: '1.0.0',
@@ -51,6 +55,7 @@ export const buildBackupPayload = (
     source,
     data: {
       addictions,
+      checkIns,
       settings: {
         theme,
         language: localStorage.getItem(APP_LANGUAGE_KEY) || 'en'
@@ -90,9 +95,10 @@ const saveBackupToNativeFilesystem = async (backup: AppBackup, filename: string)
 export const createBackup = async (
   addictions: Addiction[],
   theme: ThemeMode,
-  source: 'auto' | 'manual'
+  source: 'auto' | 'manual',
+  checkIns: DailyCheckIn[] = []
 ): Promise<{ backup: AppBackup; filename: string }> => {
-  const backup = buildBackupPayload(addictions, theme, source);
+  const backup = buildBackupPayload(addictions, theme, source, checkIns);
   const filename = getBackupFilename(new Date(backup.createdAt));
   persistBackupMetadata(backup, filename);
 
@@ -107,7 +113,8 @@ export const createBackup = async (
 
 export const createAutomaticBackupIfDue = async (
   addictions: Addiction[],
-  theme: ThemeMode
+  theme: ThemeMode,
+  checkIns: DailyCheckIn[] = []
 ): Promise<{ created: boolean; filename?: string }> => {
   const lastBackupAt = localStorage.getItem(LAST_BACKUP_AT_KEY);
 
@@ -118,7 +125,7 @@ export const createAutomaticBackupIfDue = async (
     }
   }
 
-  const { filename } = await createBackup(addictions, theme, 'auto');
+  const { filename } = await createBackup(addictions, theme, 'auto', checkIns);
   return { created: true, filename };
 };
 
@@ -135,6 +142,11 @@ const assertBackup = (value: unknown): AppBackup => {
 
   if (!Array.isArray(backup.data.addictions)) {
     throw new Error('Backup file has invalid addictions data.');
+  }
+
+  // Not required: only backups written since check-ins were added carry one.
+  if (backup.data.checkIns !== undefined && !Array.isArray(backup.data.checkIns)) {
+    throw new Error('Backup file has invalid check-in data.');
   }
 
   if (!isThemeMode(backup.data.settings.theme)) {

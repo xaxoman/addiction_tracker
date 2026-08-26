@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 import IconPicker from './IconPicker';
-import { Addiction } from '../types';
+import { Addiction, CopingPlan } from '../types';
+import { createCopingPlanId } from '../utils/dataValidation';
 import { useI18n } from '../i18n/useI18n';
 
 interface AddAddictionDialogProps {
@@ -19,6 +20,7 @@ interface AddAddictionDialogProps {
       unit?: 'hours' | 'days' | 'weeks' | 'months' | 'dollars';
     };
     note?: string;
+    copingPlans?: CopingPlan[];
   }) => void;
   editingAddiction?: Addiction | null;
 }
@@ -42,6 +44,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
   const [goalValue, setGoalValue] = useState('');
   const [goalUnit, setGoalUnit] = useState<'hours' | 'days' | 'weeks' | 'months' | 'dollars'>('days');
   const [note, setNote] = useState('');
+  const [copingPlans, setCopingPlans] = useState<CopingPlan[]>([]);
 
   useEffect(() => {
     if (editingAddiction) {
@@ -71,10 +74,24 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
         setGoalUnit(editingAddiction.goal.unit || 'days');
       }
       setNote(editingAddiction.note || '');
+      setCopingPlans(editingAddiction.copingPlans ? [...editingAddiction.copingPlans] : []);
     } else {
       setNote('');
+      setCopingPlans([]);
     }
   }, [editingAddiction]);
+
+  const addCopingPlan = () => {
+    setCopingPlans(prev => [...prev, { id: createCopingPlanId(), cue: '', action: '' }]);
+  };
+
+  const updateCopingPlan = (id: string, field: 'cue' | 'action', value: string) => {
+    setCopingPlans(prev => prev.map(plan => (plan.id === id ? { ...plan, [field]: value } : plan)));
+  };
+
+  const removeCopingPlan = (id: string) => {
+    setCopingPlans(prev => prev.filter(plan => plan.id !== id));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +128,12 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
         value: parsedGoalValue,
         unit: goalUnit
       },
-      note: note.trim()
+      note: note.trim(),
+      // A half-filled row is a plan the user started and abandoned; keeping it
+      // would put a dangling "if ... I will" on the craving screen.
+      copingPlans: copingPlans
+        .map(plan => ({ ...plan, cue: plan.cue.trim(), action: plan.action.trim() }))
+        .filter(plan => plan.cue && plan.action)
     });
     
     setName('');
@@ -124,6 +146,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
     setGoalValue('');
     setGoalUnit('days');
     setNote('');
+    setCopingPlans([]);
     
     onClose();
   };
@@ -327,6 +350,74 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {t('habitNotesHint')}
             </p>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('copingPlans')}
+            </label>
+            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+              {t('copingPlansHint')}
+            </p>
+
+            <div className="space-y-3">
+              {copingPlans.map(plan => (
+                <div
+                  key={plan.id}
+                  className="rounded-lg border border-gray-200 dark:border-gray-600 p-3 space-y-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-16 shrink-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      {t('copingPlanCue')}
+                    </span>
+                    <input
+                      type="text"
+                      value={plan.cue}
+                      onChange={(e) => updateCopingPlan(plan.id, 'cue', e.target.value)}
+                      placeholder={t('copingPlanCuePlaceholder')}
+                      className="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
+                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-16 shrink-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      {t('copingPlanAction')}
+                    </span>
+                    <input
+                      type="text"
+                      value={plan.action}
+                      onChange={(e) => updateCopingPlan(plan.id, 'action', e.target.value)}
+                      placeholder={t('copingPlanActionPlaceholder')}
+                      className="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
+                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeCopingPlan(plan.id)}
+                      className="shrink-0 p-2 rounded-lg text-red-600 dark:text-red-400 
+                               hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                      aria-label={t('removeCopingPlan')}
+                      title={t('removeCopingPlan')}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={addCopingPlan}
+              className="mt-3 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
+                       bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200
+                       hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <Plus size={16} />
+              {t('addCopingPlan')}
+            </button>
           </div>
 
           <div className="flex justify-end gap-2">

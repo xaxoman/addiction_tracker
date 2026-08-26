@@ -1,14 +1,26 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Addiction } from '../types';
-import { createRelapseId, sanitizeAddictionData } from '../utils/dataValidation';
+import { sanitizeAddictionData } from '../utils/dataValidation';
+import {
+  addUrge,
+  appendRelapse,
+  deleteRelapseEntry,
+  deleteUrgeEntry,
+  RelapseDetails,
+  UrgeInput
+} from '../utils/addictionEntries';
+
+export type { RelapseDetails, UrgeInput };
 
 type AddictionContextType = {
   addictions: Addiction[];
   addAddiction: (addiction: Omit<Addiction, 'id' | 'createdAt'>) => void;
   removeAddiction: (id: string) => void;
   updateAddiction: (updatedAddiction: Addiction) => void;
-  resetLastEngaged: (id: string, date: Date, note?: string) => void;
+  resetLastEngaged: (id: string, date: Date, details?: RelapseDetails) => void;
   deleteRelapse: (id: string, relapseId: string) => void;
+  logUrge: (id: string, input: UrgeInput) => void;
+  deleteUrge: (id: string, urgeId: string) => void;
   reorderAddictions: (startIndex: number, endIndex: number) => void;
   replaceAddictions: (nextAddictions: Addiction[]) => void;
 };
@@ -42,6 +54,13 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.error('Error saving addictions to localStorage:', error);
     }
   }, [addictions]);
+
+  // Applies `update` to one tracker and leaves the rest of the list untouched.
+  const updateOne = (id: string, update: (addiction: Addiction) => Addiction) => {
+    setAddictions(prev => prev.map(addiction => (
+      addiction.id === id ? update(addiction) : addiction
+    )));
+  };
 
   const addAddiction = (addiction: Omit<Addiction, 'id' | 'createdAt'>) => {
     const newAddiction: Addiction = {
@@ -78,63 +97,20 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     );
   };
 
-  const resetLastEngaged = (id: string, date: Date, note?: string) => {
-    setAddictions(prev => 
-      prev.map(addiction => 
-        addiction.id === id 
-          ? { 
-              ...addiction, 
-              lastEngaged: date,
-              notes: [
-                ...(addiction.notes ?? []),
-                {
-                  id: createRelapseId(),
-                  date,
-                  text: note,
-                  // Remember the streak anchor this relapse replaced so the
-                  // entry can be undone later if it was logged by mistake.
-                  previousLastEngaged: new Date(addiction.lastEngaged)
-                }
-              ]
-            } 
-          : addiction
-      )
-    );
+  const resetLastEngaged = (id: string, date: Date, details?: RelapseDetails) => {
+    updateOne(id, addiction => appendRelapse(addiction, date, details).addiction);
+  };
+
+  const logUrge = (id: string, input: UrgeInput) => {
+    updateOne(id, addiction => addUrge(addiction, input));
   };
 
   const deleteRelapse = (id: string, relapseId: string) => {
-    setAddictions(prev =>
-      prev.map(addiction => {
-        if (addiction.id !== id) {
-          return addiction;
-        }
+    updateOne(id, addiction => deleteRelapseEntry(addiction, relapseId));
+  };
 
-        const notes = addiction.notes ?? [];
-        const index = notes.findIndex(note => note.id === relapseId);
-        if (index === -1) {
-          return addiction;
-        }
-
-        const removed = notes[index];
-        const remaining = notes.filter((_, noteIndex) => noteIndex !== index);
-
-        // Only the most recently logged relapse drives the current streak, so
-        // removing an older entry leaves `lastEngaged` untouched. When it is the
-        // latest one, restore the anchor it replaced (falling back to the
-        // previous entry, then to the tracker's creation date for old data).
-        const isMostRecent = index === notes.length - 1;
-        const fallback = remaining.length > 0
-          ? remaining[remaining.length - 1].date
-          : addiction.createdAt;
-        const restoredAnchor = removed.previousLastEngaged ?? fallback;
-
-        return {
-          ...addiction,
-          notes: remaining,
-          lastEngaged: isMostRecent ? new Date(restoredAnchor) : addiction.lastEngaged
-        };
-      })
-    );
+  const deleteUrge = (id: string, urgeId: string) => {
+    updateOne(id, addiction => deleteUrgeEntry(addiction, urgeId));
   };
 
   const reorderAddictions = (startIndex: number, endIndex: number) => {
@@ -161,6 +137,8 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateAddiction, 
         resetLastEngaged,
         deleteRelapse,
+        logUrge,
+        deleteUrge,
         reorderAddictions,
         replaceAddictions
       }}

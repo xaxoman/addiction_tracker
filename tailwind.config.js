@@ -4,6 +4,10 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      gridTemplateColumns: {
+        // The check-in trend draws a fortnight, one column per day.
+        '14': 'repeat(14, minmax(0, 1fr))',
+      },
       spacing: {
         'safe': 'env(safe-area-inset-top)',
         'safe-bottom': 'env(safe-area-inset-bottom)',

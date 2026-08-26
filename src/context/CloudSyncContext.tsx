@@ -3,9 +3,10 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from './AuthContext';
 import { useAddictions } from './AddictionContext';
+import { useCheckIns } from './CheckInContext';
 import { useTheme } from './ThemeContext';
 import { useAppSettings } from './AppSettingsContext';
-import { Addiction, ThemeMode } from '../types';
+import { Addiction, DailyCheckIn, ThemeMode } from '../types';
 import { AppBackup, buildBackupPayload } from '../utils/backup';
 import {
   CloudSession,
@@ -30,6 +31,7 @@ export type CloudSyncStatus = 'disabled' | 'syncing' | 'pending' | 'synced' | 'o
 type LocalSnapshot = {
   key: string;
   addictions: Addiction[];
+  checkIns: DailyCheckIn[];
   theme: ThemeMode;
 };
 
@@ -50,12 +52,20 @@ const isOnline = (): boolean => typeof navigator === 'undefined' || navigator.on
 
 // Serialized view of everything a backup contains, used to tell whether the
 // local and cloud copies actually differ.
-const localSnapshotKey = (addictions: Addiction[], theme: ThemeMode, language: string): string =>
-  JSON.stringify({ addictions, theme, language });
+const localSnapshotKey = (
+  addictions: Addiction[],
+  checkIns: DailyCheckIn[],
+  theme: ThemeMode,
+  language: string
+): string => JSON.stringify({ addictions, checkIns, theme, language });
 
 const remoteSnapshotKey = (backup: AppBackup): string =>
   JSON.stringify({
     addictions: backup.data.addictions,
+    // Older backups have no series at all; comparing against [] keeps them
+    // equal to a device that has never checked in, instead of looking changed
+    // on every poll.
+    checkIns: backup.data.checkIns ?? [],
     theme: backup.data.settings.theme,
     language: backup.data.settings.language
   });
@@ -78,6 +88,7 @@ const remoteChangedSinceLastSync = (remoteUpdatedAt: string): boolean => {
 export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, logout } = useAuth();
   const { addictions, replaceAddictions } = useAddictions();
+  const { checkIns, replaceCheckIns } = useCheckIns();
   const { theme, setThemeMode } = useTheme();
   const { language, setLanguage } = useAppSettings();
 
@@ -90,23 +101,24 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isPrimed, setIsPrimed] = useState(false);
 
   const snapshotKey = useMemo(
-    () => localSnapshotKey(addictions, theme, language),
-    [addictions, theme, language]
+    () => localSnapshotKey(addictions, checkIns, theme, language),
+    [addictions, checkIns, theme, language]
   );
 
   // Latest values, readable from listeners and async callbacks that must not be
   // re-created (and re-registered) on every edit.
   const sessionRef = useRef<CloudSession | null>(session);
-  const snapshotRef = useRef<LocalSnapshot>({ key: snapshotKey, addictions, theme });
+  const snapshotRef = useRef<LocalSnapshot>({ key: snapshotKey, addictions, checkIns, theme });
   const logoutRef = useRef(logout);
   const applyBackupRef = useRef<(backup: AppBackup) => void>(() => {});
 
   useEffect(() => {
     sessionRef.current = session;
-    snapshotRef.current = { key: snapshotKey, addictions, theme };
+    snapshotRef.current = { key: snapshotKey, addictions, checkIns, theme };
     logoutRef.current = logout;
     applyBackupRef.current = (backup: AppBackup) => {
       replaceAddictions(backup.data.addictions);
+      replaceCheckIns(backup.data.checkIns ?? []);
       setThemeMode(backup.data.settings.theme);
       setLanguage(backup.data.settings.language === 'it' ? 'it' : 'en');
     };
@@ -128,7 +140,7 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const snapshot = snapshotRef.current;
       const updatedAt = await pushCloudBackup(
         token,
-        buildBackupPayload(snapshot.addictions, snapshot.theme, 'auto'),
+        buildBackupPayload(snapshot.addictions, snapshot.theme, 'auto', snapshot.checkIns),
         options
       );
       syncedKeyRef.current = snapshot.key;
@@ -242,7 +254,7 @@ export const CloudSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     syncedKeyRef.current = snapshot.key;
     pushCloudBackup(
       activeSession.token,
-      buildBackupPayload(snapshot.addictions, snapshot.theme, 'auto'),
+      buildBackupPayload(snapshot.addictions, snapshot.theme, 'auto', snapshot.checkIns),
       { keepalive: true }
     )
       .then((updatedAt) => recordSync(updatedAt))

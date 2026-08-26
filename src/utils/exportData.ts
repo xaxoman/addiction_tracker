@@ -1,5 +1,6 @@
 // Export utility for addiction data
-import { Addiction } from '../types';
+import { Addiction, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
+import { getUrges, summarizeUrges } from './urgeStats';
 
 export interface ExportDataRow {
   addictionName: string;
@@ -14,9 +15,19 @@ export interface ExportDataRow {
   currentStreak: number;
   totalSaved: number;
   habitNote: string;
-  relapseDate?: string;
-  relapseTime?: string;
-  relapseNote?: string;
+  copingPlans: string;
+  urgesResisted: number;
+  urgesTotal: number;
+  // One row per recorded event. A tracker with no events at all still gets a
+  // single row so its settings and totals are not lost from the export.
+  eventType: 'urge' | 'relapse' | '';
+  eventDate: string;
+  eventTime: string;
+  eventTriggers: string;
+  eventIntensity: string;
+  eventHeldSeconds: string;
+  eventPrecededBy: string;
+  eventNote: string;
 }
 
 export const formatDateForExport = (date: Date): string => {
@@ -69,10 +80,25 @@ export const calculateTotalSaved = (addiction: Addiction): number => {
   return isNaN(totalSaved) ? 0 : Math.max(0, totalSaved);
 };
 
+// Tags are exported as a single pipe-separated cell: a column per tag would
+// make the sheet unreadable, and the vocabulary can grow.
+const formatTriggers = (triggers?: TriggerTag[]): string => (
+  triggers && triggers.length > 0 ? triggers.join(' | ') : ''
+);
+
+const formatCopingPlans = (addiction: Addiction): string => (
+  (addiction.copingPlans ?? [])
+    .filter(plan => plan.cue || plan.action)
+    .map(plan => `If ${plan.cue}, I will ${plan.action}`)
+    .join(' | ')
+);
+
 export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDataRow[] => {
   const exportData: ExportDataRow[] = [];
 
   addictions.forEach(addiction => {
+    const summary = summarizeUrges(addiction);
+
     const baseData = {
       addictionName: addiction.name,
       addictionIcon: addiction.icon,
@@ -85,79 +111,147 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
       goalUnit: addiction.goal?.unit || 'N/A',
       currentStreak: calculateCurrentStreak(addiction.lastEngaged),
       totalSaved: calculateTotalSaved(addiction),
-      habitNote: addiction.note || ''
+      habitNote: addiction.note || '',
+      copingPlans: formatCopingPlans(addiction),
+      urgesResisted: summary.resisted,
+      urgesTotal: summary.total
     };
 
-    // If there are no relapses, add one row with the base data
-    if (!addiction.notes || addiction.notes.length === 0) {
+    const events: { date: Date; row: Partial<ExportDataRow> }[] = [];
+
+    // Urges that ended in a slip are exported as their relapse, so the sheet
+    // holds one row per event rather than two for the same moment.
+    getUrges(addiction).forEach((urge: UrgeEntry) => {
+      if (urge.outcome === 'relapsed') return;
+      const date = new Date(urge.date);
+      if (isNaN(date.getTime())) return;
+
+      events.push({
+        date,
+        row: {
+          eventType: 'urge',
+          eventDate: formatDateForExport(date),
+          eventTime: formatTimeForExport(date),
+          eventTriggers: formatTriggers(urge.triggers),
+          eventIntensity: urge.intensity !== undefined ? String(urge.intensity) : '',
+          eventHeldSeconds: urge.secondsHeld !== undefined ? String(urge.secondsHeld) : '',
+          eventPrecededBy: '',
+          eventNote: urge.text || ''
+        }
+      });
+    });
+
+    (addiction.notes ?? []).forEach((note: RelapseEntry) => {
+      const date = new Date(note.date);
+      const isValid = !isNaN(date.getTime());
+
+      events.push({
+        date: isValid ? date : new Date(0),
+        row: {
+          eventType: 'relapse',
+          eventDate: isValid ? formatDateForExport(date) : 'Invalid Date',
+          eventTime: isValid ? formatTimeForExport(date) : 'Invalid Time',
+          eventTriggers: formatTriggers(note.triggers),
+          eventIntensity: '',
+          eventHeldSeconds: '',
+          eventPrecededBy: note.precededBy || '',
+          eventNote: note.text || ''
+        }
+      });
+    });
+
+    if (events.length === 0) {
       exportData.push({
         ...baseData,
-        relapseDate: undefined,
-        relapseTime: undefined,
-        relapseNote: undefined
+        eventType: '',
+        eventDate: '',
+        eventTime: '',
+        eventTriggers: '',
+        eventIntensity: '',
+        eventHeldSeconds: '',
+        eventPrecededBy: '',
+        eventNote: ''
       });
-    } else {
-      // Add one row for each relapse
-      addiction.notes.forEach(note => {
-        const relapseDate = new Date(note.date);
-        exportData.push({
-          ...baseData,
-          relapseDate: isNaN(relapseDate.getTime()) ? 'Invalid Date' : formatDateForExport(relapseDate),
-          relapseTime: isNaN(relapseDate.getTime()) ? 'Invalid Time' : formatTimeForExport(relapseDate),
-          relapseNote: note.text || 'No note provided'
-        });
-      });
+      return;
     }
+
+    events
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .forEach(event => {
+        exportData.push({ ...baseData, ...event.row } as ExportDataRow);
+      });
   });
 
   return exportData;
 };
 
+const HEADERS = [
+  'Addiction Name',
+  'Icon',
+  'Cost Per Engagement',
+  'Cost Type',
+  'Last Engaged',
+  'Created At',
+  'Goal Type',
+  'Goal Value',
+  'Goal Unit',
+  'Current Streak (Days)',
+  'Total Saved',
+  'Notes',
+  'Coping Plans',
+  'Urges Resisted',
+  'Urges Total',
+  'Event Type',
+  'Event Date',
+  'Event Time',
+  'Triggers',
+  'Intensity (1-5)',
+  'Held (seconds)',
+  'Preceded By',
+  'Event Note'
+];
+
+// One ordered list of cell values per row, shared by both formats so the CSV
+// and TSV exports can never drift out of sync with the header list.
+const toCells = (row: ExportDataRow): string[] => [
+  row.addictionName,
+  row.addictionIcon,
+  String(row.costPerEngagement),
+  row.costType,
+  row.lastEngaged,
+  row.createdAt,
+  row.goalType,
+  String(row.goalValue),
+  row.goalUnit,
+  String(row.currentStreak),
+  row.totalSaved.toFixed(2),
+  row.habitNote,
+  row.copingPlans,
+  String(row.urgesResisted),
+  String(row.urgesTotal),
+  row.eventType,
+  row.eventDate,
+  row.eventTime,
+  row.eventTriggers,
+  row.eventIntensity,
+  row.eventHeldSeconds,
+  row.eventPrecededBy,
+  row.eventNote
+];
+
+const csvCell = (value: string): string => `"${value.replace(/"/g, '""')}"`;
+
+// Notes are free text and can contain tabs or newlines, either of which would
+// break a row apart in a tab-separated file.
+const tsvCell = (value: string): string => value.replace(/[\t\r\n]+/g, ' ');
+
 export const convertToCSV = (data: ExportDataRow[]): string => {
   if (data.length === 0) return '';
 
-  // Define CSV headers
-  const headers = [
-    'Addiction Name',
-    'Icon',
-    'Cost Per Engagement',
-    'Cost Type',
-    'Last Engaged',
-    'Created At',
-    'Goal Type',
-    'Goal Value',
-    'Goal Unit',
-    'Current Streak (Days)',
-    'Total Saved',
-    'Notes',
-    'Relapse Date',
-    'Relapse Time',
-    'Relapse Note'
-  ];
-
-  // Convert data to CSV format
-  const csvRows = [
-    headers.join(','),
-    ...data.map(row => [
-      `"${row.addictionName}"`,
-      `"${row.addictionIcon}"`,
-      row.costPerEngagement,
-      `"${row.costType}"`,
-      `"${row.lastEngaged}"`,
-      `"${row.createdAt}"`,
-      `"${row.goalType}"`,
-      row.goalValue,
-      `"${row.goalUnit}"`,
-      row.currentStreak,
-      row.totalSaved.toFixed(2),
-      `"${row.habitNote.replace(/"/g, '""')}"`,
-      row.relapseDate ? `"${row.relapseDate}"` : '',
-      row.relapseTime ? `"${row.relapseTime}"` : '',
-      row.relapseNote ? `"${row.relapseNote.replace(/"/g, '""')}"` : ''
-    ].join(','))
-  ];
-
-  return csvRows.join('\n');
+  return [
+    HEADERS.map(csvCell).join(','),
+    ...data.map(row => toCells(row).map(csvCell).join(','))
+  ].join('\n');
 };
 
 export const downloadCSV = (csvContent: string, filename: string = 'addiction_tracker_export.csv'): void => {
@@ -187,46 +281,10 @@ export const exportAddictionsToCSV = (addictions: Addiction[], filename?: string
 export const convertToTSV = (data: ExportDataRow[]): string => {
   if (data.length === 0) return '';
 
-  const headers = [
-    'Addiction Name',
-    'Icon',
-    'Cost Per Engagement',
-    'Cost Type',
-    'Last Engaged',
-    'Created At',
-    'Goal Type',
-    'Goal Value',
-    'Goal Unit',
-    'Current Streak (Days)',
-    'Total Saved',
-    'Notes',
-    'Relapse Date',
-    'Relapse Time',
-    'Relapse Note'
-  ];
-
-  const tsvRows = [
-    headers.join('\t'),
-    ...data.map(row => [
-      row.addictionName,
-      row.addictionIcon,
-      row.costPerEngagement,
-      row.costType,
-      row.lastEngaged,
-      row.createdAt,
-      row.goalType,
-      row.goalValue,
-      row.goalUnit,
-      row.currentStreak,
-      row.totalSaved.toFixed(2),
-      row.habitNote,
-      row.relapseDate || '',
-      row.relapseTime || '',
-      row.relapseNote || ''
-    ].join('\t'))
-  ];
-
-  return tsvRows.join('\n');
+  return [
+    HEADERS.join('\t'),
+    ...data.map(row => toCells(row).map(tsvCell).join('\t'))
+  ].join('\n');
 };
 
 export const downloadTSV = (tsvContent: string, filename: string = 'addiction_tracker_export.tsv'): void => {
