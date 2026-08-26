@@ -1,6 +1,6 @@
 // Data validation utilities to prevent NaN and invalid data issues
 
-import { CopingPlan, RelapseEntry, TRIGGER_TAGS, TriggerTag, UrgeEntry } from '../types';
+import { CopingPlan, DailyCheckIn, RelapseEntry, TRIGGER_TAGS, TriggerTag, UrgeEntry } from '../types';
 
 export const validateNumber = (value: any, fallback: number = 0): number => {
   if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
@@ -164,4 +164,51 @@ export const sanitizeAddictionData = (data: any) => {
       ? (data.copingPlans as unknown[]).map(sanitizeCopingPlan).filter(plan => plan.cue || plan.action)
       : []
   };
+};
+
+// "YYYY-MM-DD" in local time. Deriving the key with toISOString() would use UTC
+// and file a late-evening check-in under the following day.
+export const toDayKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const clampScale = (value: unknown, min: number, max: number, fallback: number): number => {
+  const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, Math.round(parsed)));
+};
+
+export const sanitizeCheckIn = (value: unknown): DailyCheckIn => {
+  const entry = asRecord(value);
+  const recordedAt = validateDate(entry.recordedAt);
+
+  return {
+    date: /^\d{4}-\d{2}-\d{2}$/.test(String(entry.date)) ? String(entry.date) : toDayKey(recordedAt),
+    mood: clampScale(entry.mood, 1, 5, 3),
+    cravingIntensity: clampScale(entry.cravingIntensity, 0, 5, 0),
+    note: validateOptionalString(entry.note),
+    recordedAt
+  };
+};
+
+// Newest last, one entry per day: a duplicate day keeps the later recording.
+export const sanitizeCheckIns = (value: unknown): DailyCheckIn[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const byDay = new Map<string, DailyCheckIn>();
+  value.map(sanitizeCheckIn).forEach(entry => {
+    const existing = byDay.get(entry.date);
+    if (!existing || entry.recordedAt.getTime() >= existing.recordedAt.getTime()) {
+      byDay.set(entry.date, entry);
+    }
+  });
+
+  return Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date));
 };

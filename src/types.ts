@@ -84,3 +84,19 @@ export interface Addiction {
 }
 
 export type ThemeMode = 'light' | 'dark';
+
+// One self-report per calendar day. Relapses and urges are spiky and only
+// appear when something goes wrong; a daily tick gives a continuous series to
+// read them against, and a reason to open the app on a day when nothing
+// happened.
+export interface DailyCheckIn {
+  // Local calendar day as "YYYY-MM-DD". One entry per day: checking in again
+  // replaces the day's entry rather than appending a second one.
+  date: string;
+  // 1 (rough) to 5 (good).
+  mood: number;
+  // 0 (no cravings at all) to 5 (constant).
+  cravingIntensity: number;
+  note?: string;
+  recordedAt: Date;
+}

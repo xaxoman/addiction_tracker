@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Addiction } from '../types';
+import { Addiction, DailyCheckIn } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { formatPercent, getTopTriggers, getUrges, startOfCurrentMonth, summarizeUrges } from '../utils/urgeStats';
 import { formatWindowTime, getRiskWindows } from '../utils/riskWindows';
@@ -7,6 +7,7 @@ import { triggerLabelKey } from '../utils/triggers';
 
 interface TrendChartsProps {
   addictions: Addiction[];
+  checkIns: DailyCheckIn[];
 }
 
 interface Point {
@@ -63,7 +64,7 @@ const getWeekdayLabel = (index: number, t: (key: string) => string): string => {
   return t(keys[index]);
 };
 
-const TrendCharts: React.FC<TrendChartsProps> = ({ addictions }) => {
+const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
   const { t } = useI18n();
   const [selectedId, setSelectedId] = useState<string | null>(addictions[0]?.id ?? null);
 
@@ -177,6 +178,23 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions }) => {
     return { best, worst };
   }, [selected, t]);
 
+  // The daily series is app-wide rather than per habit, so it sits outside the
+  // selected-tracker memos. Days with no check-in are kept as gaps: drawing
+  // through them would invent data the user never entered.
+  const checkInSeries = useMemo(() => {
+    const byDay = new Map(checkIns.map(entry => [entry.date, entry]));
+    const days: { key: string; label: string; entry?: DailyCheckIn }[] = [];
+
+    for (let i = 13; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      days.push({ key, label: String(date.getDate()), entry: byDay.get(key) });
+    }
+
+    return days;
+  }, [checkIns]);
+
   const monthly = useMemo(
     () => (selected ? summarizeUrges(selected, startOfCurrentMonth()) : null),
     [selected]
@@ -270,6 +288,55 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions }) => {
           </div>
         </div>
       </div>
+
+      <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('checkInTrend')}</h3>
+        {checkIns.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('noCheckInsYet')}</p>
+        ) : (
+          <>
+            <div className="flex items-center gap-4 mb-2 text-[11px] text-gray-500 dark:text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400" />
+                {t('moodLabel')}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400" />
+                {t('cravingLabel')}
+              </span>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-2">
+              <div className="grid grid-cols-14 gap-1 h-24 items-end">
+                {checkInSeries.map(day => (
+                  <div key={day.key} className="flex items-end justify-center gap-0.5 h-full" title={day.key}>
+                    {day.entry ? (
+                      <>
+                        <div
+                          className="w-1/2 rounded-t bg-blue-400 dark:bg-blue-500"
+                          style={{ height: `${(day.entry.mood / 5) * 100}%` }}
+                        />
+                        <div
+                          className="w-1/2 rounded-t bg-amber-400 dark:bg-amber-500"
+                          // A craving score of 0 is a real answer, so it keeps a
+                          // sliver of height: a zero-height bar would be
+                          // indistinguishable from a day with no check-in.
+                          style={{ height: `${Math.max(4, (day.entry.cravingIntensity / 5) * 100)}%` }}
+                        />
+                      </>
+                    ) : (
+                      <div className="w-full h-1 rounded bg-gray-200 dark:bg-gray-700" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                <span>{checkInSeries[0]?.label}</span>
+                <span>{checkInSeries[checkInSeries.length - 1]?.label}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
 
       <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('streakTrend')}</h3>

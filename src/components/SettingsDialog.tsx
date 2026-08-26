@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Moon, Sun, Download, FileText, Table, Languages, Upload, Clock, Bell, Phone, Target, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAddictions } from '../context/AddictionContext';
+import { useCheckIns } from '../context/CheckInContext';
 import { useAppSettings } from '../context/AppSettingsContext';
 import { Addiction } from '../types';
 import { exportAddictionsToCSV, exportAddictionsToTSV } from '../utils/exportData';
@@ -26,6 +27,7 @@ interface SettingsDialogProps {
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addictions }) => {
   const { theme, toggleTheme, setThemeMode } = useTheme();
   const { replaceAddictions } = useAddictions();
+  const { checkIns, replaceCheckIns } = useCheckIns();
   const {
     language,
     setLanguage,
@@ -100,7 +102,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
     setIsHandlingBackup(true);
 
     try {
-      const { backup, filename } = await createBackup(addictions, theme, 'manual');
+      const { backup, filename } = await createBackup(addictions, theme, 'manual', checkIns);
       setLastBackupAt(backup.createdAt);
       setLastBackupFilename(filename);
       alert(`${t('backupCreated')} ${filename}`);
@@ -123,6 +125,11 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
     try {
       const backup = await parseBackupFile(file);
       replaceAddictions(backup.data.addictions);
+      // Absent in backups written before check-ins existed; importing one must
+      // not silently wipe the series on this device.
+      if (backup.data.checkIns) {
+        replaceCheckIns(backup.data.checkIns);
+      }
       setThemeMode(backup.data.settings.theme);
       setLanguage(backup.data.settings.language === 'it' ? 'it' : 'en');
 

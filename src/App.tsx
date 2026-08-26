@@ -3,6 +3,7 @@ import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AddictionProvider, useAddictions, RelapseDetails, UrgeInput } from './context/AddictionContext';
 import { AppSettingsProvider, useAppSettings } from './context/AppSettingsContext';
+import { CheckInProvider, useCheckIns, CheckInInput } from './context/CheckInContext';
 import { AuthProvider } from './context/AuthContext';
 import { CloudSyncProvider } from './context/CloudSyncContext';
 import { Addiction } from './types';
@@ -13,6 +14,7 @@ import DraggableAddictionList from './components/DraggableAddictionList';
 import StatsSection from './components/StatsSection';
 import TrendCharts from './components/TrendCharts';
 import EmptyState from './components/EmptyState';
+import DailyCheckInCard from './components/DailyCheckInCard';
 import PanicScreen, { UrgeOutcomePayload } from './components/PanicScreen';
 import BottomTabBar, { AppTab } from './components/BottomTabBar';
 import { capacitorService } from './services/capacitor';
@@ -35,6 +37,7 @@ const AppContent = () => {
     deleteUrge,
     reorderAddictions
   } = useAddictions();
+  const { checkIns, todaysCheckIn, recordCheckIn } = useCheckIns();
   const { theme } = useTheme();
   const {
     dailyCheckInEnabled,
@@ -126,7 +129,7 @@ const AppContent = () => {
     // Check on mount and whenever user data changes so we can create a daily backup.
     const checkAndCreateDailyBackup = async () => {
       try {
-        const result = await createAutomaticBackupIfDue(addictions, theme);
+        const result = await createAutomaticBackupIfDue(addictions, theme, checkIns);
         if (result.created) {
           setNotice({ text: t('autoBackupCreatedPill'), tone: 'backup' });
         }
@@ -143,7 +146,7 @@ const AppContent = () => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [addictions, theme]);
+  }, [addictions, checkIns, theme]);
 
   useEffect(() => {
     if (!notice) {
@@ -267,6 +270,12 @@ const AppContent = () => {
     setPanicAddictionId(null);
   };
 
+  const handleRecordCheckIn = async (input: CheckInInput) => {
+    await capacitorService.vibrate();
+    recordCheckIn(input);
+    setNotice({ text: t('checkedInToday'), tone: 'urge' });
+  };
+
   const handleTabChange = async (tab: AppTab) => {
     setActiveTab(tab);
     await capacitorService.vibrate();
@@ -281,6 +290,7 @@ const AppContent = () => {
           <>
             {addictions.length > 0 ? (
               <>
+                <DailyCheckInCard todaysCheckIn={todaysCheckIn} onRecord={handleRecordCheckIn} />
                 <StatsSection addictions={addictions} />
                 <DraggableAddictionList
                   addictions={addictions}
@@ -303,7 +313,7 @@ const AppContent = () => {
         {activeTab === 'trends' && (
           <>
             {addictions.length > 0 ? (
-              <TrendCharts addictions={addictions} />
+              <TrendCharts addictions={addictions} checkIns={checkIns} />
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 text-center">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('trends')}</h2>
@@ -361,11 +371,13 @@ function App() {
     <AppSettingsProvider>
       <ThemeProvider>
         <AddictionProvider>
-          <AuthProvider>
-            <CloudSyncProvider>
-              <AppContent />
-            </CloudSyncProvider>
-          </AuthProvider>
+          <CheckInProvider>
+            <AuthProvider>
+              <CloudSyncProvider>
+                <AppContent />
+              </CloudSyncProvider>
+            </AuthProvider>
+          </CheckInProvider>
         </AddictionProvider>
       </ThemeProvider>
     </AppSettingsProvider>
