@@ -179,6 +179,24 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
   return Notification.requestPermission();
 };
 
+// Every milestone the app has announced leaves a marker behind. Without a
+// sweep those accumulate for the life of the install, so drop the ones old
+// enough that the milestone they guard can no longer be re-reached.
+const MILESTONE_MARKER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+const pruneMilestoneMarkers = (): void => {
+  const cutoff = Date.now() - MILESTONE_MARKER_TTL_MS;
+
+  Object.keys(localStorage)
+    .filter(key => key.startsWith(MILESTONE_ALERT_SENT_PREFIX))
+    .forEach(key => {
+      const sentAt = Number(localStorage.getItem(key));
+      if (!Number.isFinite(sentAt) || sentAt < cutoff) {
+        localStorage.removeItem(key);
+      }
+    });
+};
+
 export const startReminderScheduler = (options: ReminderOptions): (() => void) => {
   if (Capacitor.isNativePlatform()) {
     void scheduleNativeNotifications(options);
@@ -270,6 +288,7 @@ export const startReminderScheduler = (options: ReminderOptions): (() => void) =
     sendMilestoneAlerts();
   };
 
+  pruneMilestoneMarkers();
   tick();
   const intervalId = window.setInterval(tick, 30 * 1000);
 

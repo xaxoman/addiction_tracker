@@ -236,10 +236,14 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions }) => {
         })}
       </div>
 
-      {monthly.total > 0 && (
+      {allTime.total > 0 && (
         <section className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
           <p className="text-base font-medium text-emerald-900 dark:text-emerald-200">
-            {t('urgesBeatenThisMonth', { resisted: monthly.resisted, total: monthly.total })}
+            {/* A month with nothing in it yet would read as "you beat 0 of 0", so
+                fall back to the all-time count until there is something to say. */}
+            {monthly.total > 0
+              ? t('urgesBeatenThisMonth', { resisted: monthly.resisted, total: monthly.total })
+              : t('urgesBeatenAllTime', { resisted: allTime.resisted, total: allTime.total })}
           </p>
         </section>
       )}
@@ -294,7 +298,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions }) => {
 
       {hasWeeklyEvents && (
         <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('relapseByWeek')}</h3>
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('eventsByWeek')}</h3>
           <div className="flex items-center gap-4 mb-2 text-[11px] text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />

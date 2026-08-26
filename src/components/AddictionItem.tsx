@@ -259,7 +259,9 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
   const daysSince = getDaysSince(addiction.lastEngaged);
   const progress = getProgress();
-  const milestone = useMemo(() => getMilestoneState(addiction.lastEngaged), [addiction.lastEngaged, timeSince.days]);
+  // Recomputed on every tick rather than memoized: the countdown has to stay
+  // live, and walking six milestones costs nothing.
+  const milestone = getMilestoneState(addiction.lastEngaged);
   const monthlyUrges = useMemo(
     () => summarizeUrges(addiction, startOfCurrentMonth()),
     [addiction]
@@ -467,7 +469,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
           {isUrge && event.urge.intensity !== undefined && (
             <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {t('howStrongWasIt')} {event.urge.intensity}/5
+              {t('intensityLabel')} {event.urge.intensity}/5
               {heldFor !== undefined && heldFor > 0 && (
                 <> · {t('heldFor', { duration: formatHeldDuration(heldFor) })}</>
               )}
@@ -623,7 +625,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-4 max-[640px]:grid-cols-2 max-[450px]:grid-cols-1 gap-3 mb-4">
+        <div className="grid grid-cols-4 max-[640px]:grid-cols-2 gap-3 mb-4">
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
               {t('costPerTime')}

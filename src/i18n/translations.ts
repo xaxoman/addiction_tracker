@@ -52,12 +52,6 @@ const en: Dictionary = {
   noteOptional: 'Note (optional)',
   relapsePrompt: 'What triggered this relapse?',
   confirmReset: 'Confirm Reset',
-  relapseHistory: 'Relapse History',
-  recentRelapses: 'Recent Relapses',
-  noNote: 'No note',
-  selectDayHint: 'Tap a day to see the relapses recorded on it.',
-  noRelapsesOnDay: 'No relapses recorded on this day.',
-  noRelapsesRecorded: 'No relapses recorded yet.',
   deleteRelapse: 'Delete relapse',
   deleteRelapseConfirm: 'Delete this relapse? Your streak goes back to what it was before it was recorded.',
   previousMonth: 'Previous month',
@@ -102,7 +96,6 @@ const en: Dictionary = {
   relapsesRecorded: 'Relapses Recorded',
   noRelapsesYet: 'No relapses recorded yet, keep going! Relapse charts will appear here.',
   streakTrend: 'Streak Length Over Time (12 weeks)',
-  relapseByWeek: 'Relapses per Week (12 weeks)',
   bestWorstDays: 'Best and Worst Days',
   bestDay: 'Best day',
   worstDay: 'Worst day',
@@ -174,14 +167,11 @@ const en: Dictionary = {
   noTriggerData: 'Tag a few urges and relapses to see your patterns here.',
 
   // --- Urges --------------------------------------------------------------
-  urges: 'Urges',
   urgesResisted: 'Urges resisted',
   urgeResisted: 'Resisted',
-  urgeRelapsed: 'Ended in a relapse',
   logUrgeManually: 'Log an urge I resisted',
   urgesBeatenThisMonth: 'You beat {resisted} of {total} urges this month.',
   urgesBeatenAllTime: 'You beat {resisted} of {total} urges.',
-  noUrgesYet: 'No urges logged yet. Every one you ride out gets counted here.',
   resistedRate: 'Resisted rate',
   resistedThisMonth: 'Resisted this month',
   deleteUrge: 'Delete urge',
@@ -189,6 +179,7 @@ const en: Dictionary = {
   deleteUrgeWithRelapseConfirm: 'This urge was logged together with the relapse that followed it. Deleting it removes both, and your streak goes back to what it was.',
   deleteRelapseWithUrgeConfirm: 'This relapse was logged from the craving screen. Deleting it also removes that urge, and your streak goes back to what it was.',
   howStrongWasIt: 'How strong was it?',
+  intensityLabel: 'Intensity',
   intensityMild: 'Mild',
   intensityIntense: 'Intense',
   urgeNotePlaceholder: 'Anything worth remembering about it?',
@@ -197,7 +188,6 @@ const en: Dictionary = {
 
   // --- Panic / craving screen --------------------------------------------
   cravingNow: 'I am craving',
-  cravingNowShort: 'Craving',
   panicTitle: 'Ride it out',
   panicSubtitle: 'Cravings peak and pass. Give this ten minutes.',
   panicTimeUp: 'The peak has passed.',
@@ -269,7 +259,7 @@ const en: Dictionary = {
   legendRelapse: 'Relapse',
   recentActivity: 'Recent activity',
   noActivityRecorded: 'Nothing recorded yet.',
-  events: 'events'
+  eventsByWeek: 'Urges and relapses per week (12 weeks)'
 };
 
 const it: Dictionary = {
@@ -322,12 +312,6 @@ const it: Dictionary = {
   noteOptional: 'Nota (opzionale)',
   relapsePrompt: 'Cosa ha scatenato questa ricaduta?',
   confirmReset: 'Conferma reset',
-  relapseHistory: 'Storico ricadute',
-  recentRelapses: 'Ricadute recenti',
-  noNote: 'Nessuna nota',
-  selectDayHint: 'Tocca un giorno per vedere le ricadute registrate.',
-  noRelapsesOnDay: 'Nessuna ricaduta registrata in questo giorno.',
-  noRelapsesRecorded: 'Nessuna ricaduta registrata.',
   deleteRelapse: 'Elimina ricaduta',
   deleteRelapseConfirm: 'Eliminare questa ricaduta? La serie torna a com\'era prima che fosse registrata.',
   previousMonth: 'Mese precedente',
@@ -372,7 +356,6 @@ const it: Dictionary = {
   relapsesRecorded: 'Ricadute registrate',
   noRelapsesYet: 'Nessuna ricaduta registrata, continua cosi! I grafici delle ricadute appariranno qui.',
   streakTrend: 'Andamento serie (12 settimane)',
-  relapseByWeek: 'Ricadute per settimana (12 settimane)',
   bestWorstDays: 'Giorni migliori e peggiori',
   bestDay: 'Giorno migliore',
   worstDay: 'Giorno peggiore',
@@ -444,14 +427,11 @@ const it: Dictionary = {
   noTriggerData: 'Assegna qualche etichetta a impulsi e ricadute per vedere qui i tuoi schemi.',
 
   // --- Urges --------------------------------------------------------------
-  urges: 'Impulsi',
   urgesResisted: 'Impulsi superati',
   urgeResisted: 'Superato',
-  urgeRelapsed: 'Finito in ricaduta',
   logUrgeManually: 'Registra un impulso superato',
   urgesBeatenThisMonth: 'Hai superato {resisted} impulsi su {total} questo mese.',
   urgesBeatenAllTime: 'Hai superato {resisted} impulsi su {total}.',
-  noUrgesYet: 'Nessun impulso registrato. Ogni volta che ne superi uno viene contato qui.',
   resistedRate: 'Tasso di successo',
   resistedThisMonth: 'Superati questo mese',
   deleteUrge: 'Elimina impulso',
@@ -459,6 +439,7 @@ const it: Dictionary = {
   deleteUrgeWithRelapseConfirm: 'Questo impulso e stato registrato insieme alla ricaduta che ne e seguita. Eliminandolo si rimuovono entrambi e la serie torna a com\'era.',
   deleteRelapseWithUrgeConfirm: 'Questa ricaduta e stata registrata dalla schermata impulso. Eliminandola si rimuove anche quell\'impulso e la serie torna a com\'era.',
   howStrongWasIt: 'Quanto era forte?',
+  intensityLabel: 'Intensita',
   intensityMild: 'Lieve',
   intensityIntense: 'Fortissimo',
   urgeNotePlaceholder: 'C\'e qualcosa da ricordare?',
@@ -467,7 +448,6 @@ const it: Dictionary = {
 
   // --- Panic / craving screen --------------------------------------------
   cravingNow: 'Ho un impulso',
-  cravingNowShort: 'Impulso',
   panicTitle: 'Lascialo passare',
   panicSubtitle: 'Gli impulsi salgono e poi calano. Dedicagli dieci minuti.',
   panicTimeUp: 'Il picco e passato.',
@@ -539,7 +519,7 @@ const it: Dictionary = {
   legendRelapse: 'Ricaduta',
   recentActivity: 'Attivita recente',
   noActivityRecorded: 'Niente registrato.',
-  events: 'eventi'
+  eventsByWeek: 'Impulsi e ricadute per settimana (12 settimane)'
 };
 
 const dictionaries: Record<AppLanguage, Dictionary> = { en, it };

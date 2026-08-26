@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Phone, ShieldCheck, Sparkles, Target } from 'lucide-react';
 import { Addiction, TriggerTag } from '../types';
 import { useI18n } from '../i18n/useI18n';
@@ -97,7 +97,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
 
   const streakDays = getDaysSince(addiction.lastEngaged);
   const savedLabel = getSavedLabel(addiction);
-  const milestone = useMemo(() => getMilestoneState(addiction.lastEngaged), [addiction.lastEngaged]);
+  const milestone = getMilestoneState(addiction.lastEngaged);
 
   const plans = (addiction.copingPlans ?? []).filter(plan => plan.cue || plan.action);
 
@@ -203,7 +203,9 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div>
+              <h2 className="text-xs uppercase tracking-wide text-white/50 mb-2">{t('atStake')}</h2>
+              <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-white/10 p-4">
                 <div className="text-xs uppercase tracking-wide text-white/50 mb-1">{t('currentStreak')}</div>
                 <div className="text-3xl font-bold">
@@ -214,6 +216,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               <div className="rounded-2xl bg-white/10 p-4">
                 <div className="text-xs uppercase tracking-wide text-white/50 mb-1">{t('totalSaved')}</div>
                 <div className="text-3xl font-bold break-words">{savedLabel}</div>
+              </div>
               </div>
             </div>
 
