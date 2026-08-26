@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAppSettings } from '../context/AppSettingsContext';
-import { t } from './translations';
+import { t, TranslationParams } from './translations';
 
 export const useI18n = () => {
   const { language } = useAppSettings();
@@ -8,7 +8,7 @@ export const useI18n = () => {
   return useMemo(
     () => ({
       language,
-      t: (key: string) => t(language, key)
+      t: (key: string, params?: TranslationParams) => t(language, key, params)
     }),
     [language]
   );

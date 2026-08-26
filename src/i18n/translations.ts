@@ -152,7 +152,124 @@ const en: Dictionary = {
   invalidEmail: 'Enter a valid email address.',
   passwordTooShort: 'Password must be at least 8 characters.',
   networkError: 'Could not reach the server. Check your internet connection.',
-  cloudGenericError: 'Something went wrong. Please try again.'
+  cloudGenericError: 'Something went wrong. Please try again.',
+
+  // --- Trigger tags -------------------------------------------------------
+  triggers: 'Triggers',
+  triggersHint: 'Tap what was going on. This is what turns the log into a pattern.',
+  trigger_stress: 'Stress',
+  trigger_boredom: 'Boredom',
+  trigger_social: 'Social',
+  trigger_alone: 'Alone',
+  trigger_tired: 'Tired',
+  trigger_anxious: 'Anxious',
+  trigger_sad: 'Low mood',
+  trigger_angry: 'Angry',
+  trigger_celebrating: 'Celebrating',
+  trigger_afterWork: 'After work',
+  trigger_afterMeal: 'After a meal',
+  trigger_hungry: 'Hungry',
+  topTriggers: 'Your top triggers',
+  triggerSlipShare: '{slips} of {total} ended in a relapse',
+  noTriggerData: 'Tag a few urges and relapses to see your patterns here.',
+
+  // --- Urges --------------------------------------------------------------
+  urges: 'Urges',
+  urgesResisted: 'Urges resisted',
+  urgeResisted: 'Resisted',
+  urgeRelapsed: 'Ended in a relapse',
+  logUrgeManually: 'Log an urge I resisted',
+  urgesBeatenThisMonth: 'You beat {resisted} of {total} urges this month.',
+  urgesBeatenAllTime: 'You beat {resisted} of {total} urges.',
+  noUrgesYet: 'No urges logged yet. Every one you ride out gets counted here.',
+  resistedRate: 'Resisted rate',
+  resistedThisMonth: 'Resisted this month',
+  deleteUrge: 'Delete urge',
+  deleteUrgeConfirm: 'Delete this urge?',
+  deleteUrgeWithRelapseConfirm: 'This urge was logged together with the relapse that followed it. Deleting it removes both, and your streak goes back to what it was.',
+  deleteRelapseWithUrgeConfirm: 'This relapse was logged from the craving screen. Deleting it also removes that urge, and your streak goes back to what it was.',
+  howStrongWasIt: 'How strong was it?',
+  intensityMild: 'Mild',
+  intensityIntense: 'Intense',
+  urgeNotePlaceholder: 'Anything worth remembering about it?',
+  urgeLoggedToast: 'Urge logged. That is one more you beat.',
+  heldFor: 'Held on for {duration}',
+
+  // --- Panic / craving screen --------------------------------------------
+  cravingNow: 'I am craving',
+  cravingNowShort: 'Craving',
+  panicTitle: 'Ride it out',
+  panicSubtitle: 'Cravings peak and pass. Give this ten minutes.',
+  panicTimeUp: 'The peak has passed.',
+  breatheIn: 'Breathe in',
+  breatheHold: 'Hold',
+  breatheOut: 'Breathe out',
+  yourReasons: 'Why you started',
+  yourPlan: 'Your plan',
+  atStake: 'What is at stake',
+  panicResisted: 'I got through it',
+  panicUsed: 'I used',
+  panicBack: 'Back',
+  panicCallContact: 'Call {name}',
+  panicNoteStep: 'Before you go, what set it off?',
+  skipAndSave: 'Skip and save',
+  save: 'Save',
+
+  // --- If-then coping plans ----------------------------------------------
+  copingPlans: 'If-then plans',
+  copingPlansHint: 'Decide now what you will do, so you do not have to decide mid-craving.',
+  copingPlanCue: 'If...',
+  copingPlanAction: 'I will...',
+  copingPlanCuePlaceholder: 'I feel bored after dinner',
+  copingPlanActionPlaceholder: 'walk for 10 minutes',
+  addCopingPlan: 'Add a plan',
+  removeCopingPlan: 'Remove plan',
+  noCopingPlans: 'No plan set yet. Add one in Edit.',
+
+  // --- Milestones ---------------------------------------------------------
+  milestone24h: '1 day',
+  milestone3d: '3 days',
+  milestone7d: '1 week',
+  milestone30d: '1 month',
+  milestone90d: '3 months',
+  milestone1y: '1 year',
+  nextMilestone: 'Next milestone',
+  milestoneIn: '{time} to go',
+  milestoneNotificationTitle: '{milestone} clean',
+  milestoneNotificationBody: '{name}: you have made it {milestone}. Keep going.',
+  milestoneAlerts: 'Milestone alerts',
+  enableMilestoneAlerts: 'Notify me when I reach a milestone',
+
+  // --- Risk-timed nudges --------------------------------------------------
+  riskNudges: 'Risk-timed nudges',
+  riskNudgesDesc: 'Extra reminders just before the windows you usually struggle in, worked out from your own log.',
+  enableRiskNudges: 'Enable risk-timed nudges',
+  riskNudgesNoData: 'Log a few more urges or relapses and your high-risk windows will appear here.',
+  riskNudgesScheduled: 'Scheduled before:',
+  riskNudgeTitle: 'Heads up',
+  riskNudgeBody: 'This is usually a tough window for you. Have your plan ready.',
+
+  // --- Emergency contact --------------------------------------------------
+  emergencyContact: 'Emergency contact',
+  emergencyContactDesc: 'One person to reach in one tap from the craving screen. Stored on this device only and never synced.',
+  emergencyContactName: 'Name',
+  emergencyContactPhone: 'Phone number',
+  clearEmergencyContact: 'Clear contact',
+
+  // --- Relapse debrief ----------------------------------------------------
+  whatHappened: 'What happened?',
+  whatPrecededIt: 'What came just before it?',
+  precededByPlaceholder: 'Where were you, who with, how were you feeling?',
+
+  // --- History ------------------------------------------------------------
+  historyTitle: 'History',
+  selectDayHintEvents: 'Tap a day to see the urges and relapses recorded on it.',
+  noEventsOnDay: 'Nothing recorded on this day.',
+  legendResisted: 'Resisted urge',
+  legendRelapse: 'Relapse',
+  recentActivity: 'Recent activity',
+  noActivityRecorded: 'Nothing recorded yet.',
+  events: 'events'
 };
 
 const it: Dictionary = {
@@ -305,11 +422,141 @@ const it: Dictionary = {
   invalidEmail: 'Inserisci un indirizzo email valido.',
   passwordTooShort: 'La password deve avere almeno 8 caratteri.',
   networkError: 'Impossibile raggiungere il server. Controlla la connessione.',
-  cloudGenericError: 'Qualcosa e andato storto. Riprova.'
+  cloudGenericError: 'Qualcosa e andato storto. Riprova.',
+
+  // --- Trigger tags -------------------------------------------------------
+  triggers: 'Fattori scatenanti',
+  triggersHint: 'Tocca cosa stava succedendo. E cosi che il diario diventa uno schema.',
+  trigger_stress: 'Stress',
+  trigger_boredom: 'Noia',
+  trigger_social: 'In compagnia',
+  trigger_alone: 'Da solo',
+  trigger_tired: 'Stanchezza',
+  trigger_anxious: 'Ansia',
+  trigger_sad: 'Umore basso',
+  trigger_angry: 'Rabbia',
+  trigger_celebrating: 'Festeggiando',
+  trigger_afterWork: 'Dopo il lavoro',
+  trigger_afterMeal: 'Dopo un pasto',
+  trigger_hungry: 'Fame',
+  topTriggers: 'I tuoi fattori principali',
+  triggerSlipShare: '{slips} su {total} sono finiti in ricaduta',
+  noTriggerData: 'Assegna qualche etichetta a impulsi e ricadute per vedere qui i tuoi schemi.',
+
+  // --- Urges --------------------------------------------------------------
+  urges: 'Impulsi',
+  urgesResisted: 'Impulsi superati',
+  urgeResisted: 'Superato',
+  urgeRelapsed: 'Finito in ricaduta',
+  logUrgeManually: 'Registra un impulso superato',
+  urgesBeatenThisMonth: 'Hai superato {resisted} impulsi su {total} questo mese.',
+  urgesBeatenAllTime: 'Hai superato {resisted} impulsi su {total}.',
+  noUrgesYet: 'Nessun impulso registrato. Ogni volta che ne superi uno viene contato qui.',
+  resistedRate: 'Tasso di successo',
+  resistedThisMonth: 'Superati questo mese',
+  deleteUrge: 'Elimina impulso',
+  deleteUrgeConfirm: 'Eliminare questo impulso?',
+  deleteUrgeWithRelapseConfirm: 'Questo impulso e stato registrato insieme alla ricaduta che ne e seguita. Eliminandolo si rimuovono entrambi e la serie torna a com\'era.',
+  deleteRelapseWithUrgeConfirm: 'Questa ricaduta e stata registrata dalla schermata impulso. Eliminandola si rimuove anche quell\'impulso e la serie torna a com\'era.',
+  howStrongWasIt: 'Quanto era forte?',
+  intensityMild: 'Lieve',
+  intensityIntense: 'Fortissimo',
+  urgeNotePlaceholder: 'C\'e qualcosa da ricordare?',
+  urgeLoggedToast: 'Impulso registrato. Uno in piu che hai superato.',
+  heldFor: 'Hai resistito per {duration}',
+
+  // --- Panic / craving screen --------------------------------------------
+  cravingNow: 'Ho un impulso',
+  cravingNowShort: 'Impulso',
+  panicTitle: 'Lascialo passare',
+  panicSubtitle: 'Gli impulsi salgono e poi calano. Dedicagli dieci minuti.',
+  panicTimeUp: 'Il picco e passato.',
+  breatheIn: 'Inspira',
+  breatheHold: 'Trattieni',
+  breatheOut: 'Espira',
+  yourReasons: 'Perche hai iniziato',
+  yourPlan: 'Il tuo piano',
+  atStake: 'Cosa rischi',
+  panicResisted: 'Ce l\'ho fatta',
+  panicUsed: 'Ho ceduto',
+  panicBack: 'Indietro',
+  panicCallContact: 'Chiama {name}',
+  panicNoteStep: 'Prima di uscire, cosa l\'ha scatenato?',
+  skipAndSave: 'Salta e salva',
+  save: 'Salva',
+
+  // --- If-then coping plans ----------------------------------------------
+  copingPlans: 'Piani se-allora',
+  copingPlansHint: 'Decidi ora cosa farai, cosi non devi deciderlo durante un impulso.',
+  copingPlanCue: 'Se...',
+  copingPlanAction: 'Allora...',
+  copingPlanCuePlaceholder: 'mi annoio dopo cena',
+  copingPlanActionPlaceholder: 'faccio 10 minuti di camminata',
+  addCopingPlan: 'Aggiungi un piano',
+  removeCopingPlan: 'Rimuovi piano',
+  noCopingPlans: 'Nessun piano impostato. Aggiungine uno da Modifica.',
+
+  // --- Milestones ---------------------------------------------------------
+  milestone24h: '1 giorno',
+  milestone3d: '3 giorni',
+  milestone7d: '1 settimana',
+  milestone30d: '1 mese',
+  milestone90d: '3 mesi',
+  milestone1y: '1 anno',
+  nextMilestone: 'Prossimo traguardo',
+  milestoneIn: 'mancano {time}',
+  milestoneNotificationTitle: '{milestone} senza ricadute',
+  milestoneNotificationBody: '{name}: sei arrivato a {milestone}. Continua cosi.',
+  milestoneAlerts: 'Avvisi traguardi',
+  enableMilestoneAlerts: 'Avvisami quando raggiungo un traguardo',
+
+  // --- Risk-timed nudges --------------------------------------------------
+  riskNudges: 'Promemoria nei momenti a rischio',
+  riskNudgesDesc: 'Promemoria aggiuntivi poco prima delle fasce in cui di solito fai piu fatica, calcolate dal tuo diario.',
+  enableRiskNudges: 'Attiva i promemoria a rischio',
+  riskNudgesNoData: 'Registra ancora qualche impulso o ricaduta e qui appariranno le tue fasce a rischio.',
+  riskNudgesScheduled: 'Programmati prima di:',
+  riskNudgeTitle: 'Attenzione',
+  riskNudgeBody: 'Di solito questa e una fascia difficile per te. Tieni pronto il tuo piano.',
+
+  // --- Emergency contact --------------------------------------------------
+  emergencyContact: 'Contatto di emergenza',
+  emergencyContactDesc: 'Una persona da chiamare con un tocco dalla schermata impulso. Salvato solo su questo dispositivo e mai sincronizzato.',
+  emergencyContactName: 'Nome',
+  emergencyContactPhone: 'Numero di telefono',
+  clearEmergencyContact: 'Rimuovi contatto',
+
+  // --- Relapse debrief ----------------------------------------------------
+  whatHappened: 'Cosa e successo?',
+  whatPrecededIt: 'Cosa e successo poco prima?',
+  precededByPlaceholder: 'Dove eri, con chi, come ti sentivi?',
+
+  // --- History ------------------------------------------------------------
+  historyTitle: 'Storico',
+  selectDayHintEvents: 'Tocca un giorno per vedere impulsi e ricadute registrati.',
+  noEventsOnDay: 'Niente registrato in questo giorno.',
+  legendResisted: 'Impulso superato',
+  legendRelapse: 'Ricaduta',
+  recentActivity: 'Attivita recente',
+  noActivityRecorded: 'Niente registrato.',
+  events: 'eventi'
 };
 
 const dictionaries: Record<AppLanguage, Dictionary> = { en, it };
 
-export const t = (language: AppLanguage, key: string): string => {
-  return dictionaries[language][key] || dictionaries.en[key] || key;
+export type TranslationParams = Record<string, string | number>;
+
+// `{name}` placeholders are filled from `params`. Anything the caller did not
+// supply is left in place rather than blanked out, so a missing value shows up
+// as an obvious `{name}` instead of a silently truncated sentence.
+export const t = (language: AppLanguage, key: string, params?: TranslationParams): string => {
+  const template = dictionaries[language][key] || dictionaries.en[key] || key;
+
+  if (!params) {
+    return template;
+  }
+
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => (
+    Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match
+  ));
 };

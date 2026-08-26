@@ -5,6 +5,14 @@ export type AppLanguage = 'en' | 'it';
 export const APP_LANGUAGE_KEY = 'appLanguage';
 export const DAILY_CHECKIN_ENABLED_KEY = 'dailyCheckInEnabled';
 export const DAILY_CHECKIN_TIME_KEY = 'dailyCheckInTime';
+export const RISK_NUDGES_ENABLED_KEY = 'riskNudgesEnabled';
+export const MILESTONE_ALERTS_ENABLED_KEY = 'milestoneAlertsEnabled';
+export const EMERGENCY_CONTACT_KEY = 'emergencyContact';
+
+export interface EmergencyContact {
+  name: string;
+  phone: string;
+}
 
 interface AppSettingsContextType {
   language: AppLanguage;
@@ -13,6 +21,12 @@ interface AppSettingsContextType {
   setDailyCheckInEnabled: (enabled: boolean) => void;
   dailyCheckInTime: string;
   setDailyCheckInTime: (time: string) => void;
+  riskNudgesEnabled: boolean;
+  setRiskNudgesEnabled: (enabled: boolean) => void;
+  milestoneAlertsEnabled: boolean;
+  setMilestoneAlertsEnabled: (enabled: boolean) => void;
+  emergencyContact: EmergencyContact | null;
+  setEmergencyContact: (contact: EmergencyContact | null) => void;
 }
 
 const AppSettingsContext = createContext<AppSettingsContextType | undefined>(undefined);
@@ -44,6 +58,26 @@ const normalizeBoolean = (value: string | null, fallback: boolean): boolean => {
   return value === 'true';
 };
 
+// The emergency contact is deliberately kept out of the backup/sync payload:
+// it is somebody else's phone number, and the user only agreed to store it on
+// this device.
+const readEmergencyContact = (): EmergencyContact | null => {
+  const raw = localStorage.getItem(EMERGENCY_CONTACT_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<EmergencyContact>;
+    const name = typeof parsed?.name === 'string' ? parsed.name.trim() : '';
+    const phone = typeof parsed?.phone === 'string' ? parsed.phone.trim() : '';
+    return phone ? { name, phone } : null;
+  } catch {
+    localStorage.removeItem(EMERGENCY_CONTACT_KEY);
+    return null;
+  }
+};
+
 export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<AppLanguage>(() => {
     return normalizeLanguage(localStorage.getItem(APP_LANGUAGE_KEY));
@@ -54,6 +88,13 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [dailyCheckInTime, setDailyCheckInTimeState] = useState<string>(() => {
     return normalizeCheckInTime(localStorage.getItem(DAILY_CHECKIN_TIME_KEY));
   });
+  const [riskNudgesEnabled, setRiskNudgesEnabledState] = useState<boolean>(() => {
+    return normalizeBoolean(localStorage.getItem(RISK_NUDGES_ENABLED_KEY), false);
+  });
+  const [milestoneAlertsEnabled, setMilestoneAlertsEnabledState] = useState<boolean>(() => {
+    return normalizeBoolean(localStorage.getItem(MILESTONE_ALERTS_ENABLED_KEY), false);
+  });
+  const [emergencyContact, setEmergencyContactState] = useState<EmergencyContact | null>(readEmergencyContact);
 
   const setLanguage = (nextLanguage: AppLanguage) => {
     setLanguageState(nextLanguage);
@@ -71,6 +112,30 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     localStorage.setItem(DAILY_CHECKIN_TIME_KEY, normalized);
   };
 
+  const setRiskNudgesEnabled = (enabled: boolean) => {
+    setRiskNudgesEnabledState(enabled);
+    localStorage.setItem(RISK_NUDGES_ENABLED_KEY, String(enabled));
+  };
+
+  const setMilestoneAlertsEnabled = (enabled: boolean) => {
+    setMilestoneAlertsEnabledState(enabled);
+    localStorage.setItem(MILESTONE_ALERTS_ENABLED_KEY, String(enabled));
+  };
+
+  const setEmergencyContact = (contact: EmergencyContact | null) => {
+    const normalized = contact && contact.phone.trim()
+      ? { name: contact.name.trim(), phone: contact.phone.trim() }
+      : null;
+
+    setEmergencyContactState(normalized);
+
+    if (normalized) {
+      localStorage.setItem(EMERGENCY_CONTACT_KEY, JSON.stringify(normalized));
+    } else {
+      localStorage.removeItem(EMERGENCY_CONTACT_KEY);
+    }
+  };
+
   const value = useMemo(
     () => ({
       language,
@@ -78,9 +143,15 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       dailyCheckInEnabled,
       setDailyCheckInEnabled,
       dailyCheckInTime,
-      setDailyCheckInTime
+      setDailyCheckInTime,
+      riskNudgesEnabled,
+      setRiskNudgesEnabled,
+      milestoneAlertsEnabled,
+      setMilestoneAlertsEnabled,
+      emergencyContact,
+      setEmergencyContact
     }),
-    [language, dailyCheckInEnabled, dailyCheckInTime]
+    [language, dailyCheckInEnabled, dailyCheckInTime, riskNudgesEnabled, milestoneAlertsEnabled, emergencyContact]
   );
 
   return <AppSettingsContext.Provider value={value}>{children}</AppSettingsContext.Provider>;

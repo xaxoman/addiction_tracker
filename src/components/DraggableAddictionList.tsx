@@ -1,11 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { Addiction } from '../types';
+import { RelapseDetails, UrgeInput } from '../context/AddictionContext';
 import AddictionItem from './AddictionItem';
 
 interface DraggableAddictionListProps {
   addictions: Addiction[];
-  onReset: (id: string, date: Date, note?: string) => void;
+  onReset: (id: string, date: Date, details?: RelapseDetails) => void;
   onDeleteRelapse: (id: string, relapseId: string) => void;
+  onLogUrge: (id: string, input: UrgeInput) => void;
+  onDeleteUrge: (id: string, urgeId: string) => void;
+  onOpenPanic: (addiction: Addiction) => void;
   onReorder: (startIndex: number, endIndex: number) => void;
   onEdit: (addiction: Addiction) => void;
   onDelete: (id: string) => void;
@@ -15,6 +19,9 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
   addictions, 
   onReset,
   onDeleteRelapse,
+  onLogUrge,
+  onDeleteUrge,
+  onOpenPanic,
   onReorder,
   onEdit,
   onDelete
@@ -82,6 +89,9 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
             addiction={addiction} 
             onReset={onReset}
             onDeleteRelapse={onDeleteRelapse}
+            onLogUrge={onLogUrge}
+            onDeleteUrge={onDeleteUrge}
+            onOpenPanic={onOpenPanic}
             onEdit={onEdit}
             onDelete={onDelete}
           />
