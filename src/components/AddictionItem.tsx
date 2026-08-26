@@ -9,9 +9,7 @@ import ProgressCircle from './ProgressCircle';
 import TriggerTagPicker, { TriggerTagList } from './TriggerTagPicker';
 import { exportSingleAddictionToCSV } from '../utils/exportData';
 import { useI18n } from '../i18n/useI18n';
-import {
-  formatElapsed, formatHeldDuration, formatMinutesSaved, getDaysSince, getSavedAmount
-} from '../utils/format';
+import { formatElapsed, formatHeldDuration, getDaysSince, getSavedLabel } from '../utils/format';
 import { formatCountdown, getMilestoneState } from '../utils/milestones';
 import { startOfCurrentMonth, summarizeUrges } from '../utils/urgeStats';
 
@@ -278,20 +276,6 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
         return `${costValue} impact`;
       default:
         return `${costValue}`;
-    }
-  };
-
-  const getSavedLabelText = (): string => {
-    const amount = getSavedAmount(addiction);
-    switch (addiction.costType) {
-      case 'money':
-        return `$${amount.toFixed(2)}`;
-      case 'time':
-        return formatMinutesSaved(amount);
-      case 'health':
-        return `${amount} impact`;
-      default:
-        return `${amount}`;
     }
   };
 
@@ -710,7 +694,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               {t('totalSaved')}
             </div>
             <div className="text-xl font-semibold text-green-600 dark:text-green-400">
-              {getSavedLabelText()}
+              {getSavedLabel(addiction)}
             </div>
           </div>
 

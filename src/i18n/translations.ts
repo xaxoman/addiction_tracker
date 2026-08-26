@@ -250,6 +250,7 @@ const en: Dictionary = {
   enableRiskNudges: 'Enable risk-timed nudges',
   riskNudgesNoData: 'Log a few more urges or relapses and your high-risk windows will appear here.',
   riskNudgesScheduled: 'Scheduled before:',
+  riskyWindows: 'Your riskiest windows',
   riskNudgeTitle: 'Heads up',
   riskNudgeBody: 'This is usually a tough window for you. Have your plan ready.',
 
@@ -524,6 +525,7 @@ const it: Dictionary = {
   enableRiskNudges: 'Attiva i promemoria a rischio',
   riskNudgesNoData: 'Registra ancora qualche impulso o ricaduta e qui appariranno le tue fasce a rischio.',
   riskNudgesScheduled: 'Programmati prima di:',
+  riskyWindows: 'Le tue fasce piu a rischio',
   riskNudgeTitle: 'Attenzione',
   riskNudgeBody: 'Di solito questa e una fascia difficile per te. Tieni pronto il tuo piano.',
 

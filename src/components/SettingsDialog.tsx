@@ -284,7 +284,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('riskNudgesNoData')}</p>
               ) : (
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('riskNudgesScheduled')}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                    {riskNudgesEnabled ? t('riskNudgesScheduled') : t('riskyWindows')}
+                  </p>
                   <ul className="space-y-1">
                     {riskWindows.map((window) => (
                       <li
