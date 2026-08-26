@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Moon, Sun, Download, FileText, Table, Languages, Upload, Clock, Bell } from 'lucide-react';
+import { X, Moon, Sun, Download, FileText, Table, Languages, Upload, Clock, Bell, Phone, Target, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAddictions } from '../context/AddictionContext';
 import { useAppSettings } from '../context/AppSettingsContext';
@@ -15,6 +15,7 @@ import {
 } from '../utils/backup';
 import { useI18n } from '../i18n/useI18n';
 import { requestNotificationPermission } from '../services/checkInNotifications';
+import { formatWindowTime, getRiskWindows } from '../utils/riskWindows';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -31,7 +32,13 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
     dailyCheckInEnabled,
     setDailyCheckInEnabled,
     dailyCheckInTime,
-    setDailyCheckInTime
+    setDailyCheckInTime,
+    riskNudgesEnabled,
+    setRiskNudgesEnabled,
+    milestoneAlertsEnabled,
+    setMilestoneAlertsEnabled,
+    emergencyContact,
+    setEmergencyContact
   } = useAppSettings();
   const { t } = useI18n();
   const [isExporting, setIsExporting] = useState(false);
@@ -39,6 +46,16 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
   const [lastBackupFilename, setLastBackupFilename] = useState<string | null>(null);
   const backupFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [contactName, setContactName] = useState(emergencyContact?.name ?? '');
+  const [contactPhone, setContactPhone] = useState(emergencyContact?.phone ?? '');
+
+  // The user's own high-risk windows, shown so the nudge times are never a
+  // black box: they can see exactly what the app worked out about them.
+  const riskWindows = useMemo(() => getRiskWindows(addictions), [addictions]);
+
+  const weekdayLabel = (index: number): string => (
+    t(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][index])
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -238,6 +255,106 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
                 <Bell className="w-4 h-4" />
                 <span>{t('requestPermission')}</span>
               </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('riskNudges')}</h3>
+            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('riskNudgesDesc')}</p>
+
+              <label className="flex items-center justify-between gap-3">
+                <span className="text-sm text-gray-900 dark:text-white">{t('enableRiskNudges')}</span>
+                <input
+                  type="checkbox"
+                  checked={riskNudgesEnabled}
+                  onChange={(event) => setRiskNudgesEnabled(event.target.checked)}
+                  className="h-4 w-4"
+                />
+              </label>
+
+              {riskWindows.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('riskNudgesNoData')}</p>
+              ) : (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('riskNudgesScheduled')}</p>
+                  <ul className="space-y-1">
+                    {riskWindows.map((window) => (
+                      <li
+                        key={`${window.weekday}-${window.hour}`}
+                        className="flex items-center justify-between gap-2 text-sm text-gray-900 dark:text-white"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                          {weekdayLabel(window.weekday)}
+                        </span>
+                        <span className="tabular-nums">{formatWindowTime(window)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('milestoneAlerts')}</h3>
+            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <label className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+                  <Target className="w-4 h-4 text-amber-500" />
+                  {t('enableMilestoneAlerts')}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={milestoneAlertsEnabled}
+                  onChange={(event) => setMilestoneAlertsEnabled(event.target.checked)}
+                  className="h-4 w-4"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('emergencyContact')}</h3>
+            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('emergencyContactDesc')}</p>
+
+              <label className="block">
+                <span className="text-sm text-gray-900 dark:text-white">{t('emergencyContactName')}</span>
+                <input
+                  type="text"
+                  value={contactName}
+                  onChange={(event) => setContactName(event.target.value)}
+                  onBlur={() => setEmergencyContact({ name: contactName, phone: contactPhone })}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm text-gray-900 dark:text-white">{t('emergencyContactPhone')}</span>
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(event) => setContactPhone(event.target.value)}
+                  onBlur={() => setEmergencyContact({ name: contactName, phone: contactPhone })}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </label>
+
+              {emergencyContact && (
+                <button
+                  onClick={() => {
+                    setContactName('');
+                    setContactPhone('');
+                    setEmergencyContact(null);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>{t('clearEmergencyContact')}</span>
+                </button>
+              )}
             </div>
           </div>
 
