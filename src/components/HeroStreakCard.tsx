@@ -1,5 +1,4 @@
 import React from 'react';
-import { Flame, Medal } from 'lucide-react';
 import { Addiction } from '../types';
 import mountains from '../assets/mountains.webp';
 import { StreakStats } from '../utils/streaks';
@@ -47,7 +46,7 @@ const HeroStreakCard: React.FC<HeroStreakCardProps> = ({ addiction, streak }) =>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-white/85 dark:bg-white/10 ring-1 ring-forest-900/5 dark:ring-white/10 backdrop-blur-sm px-3 py-2.5 flex items-center gap-2.5">
-            <Flame size={18} className="text-amber-500 dark:text-amber-300 shrink-0" />
+            <span className="text-lg leading-none shrink-0" aria-hidden="true">🔥</span>
             <div className="min-w-0">
               <div className="text-[0.65rem] uppercase tracking-wide whitespace-nowrap text-forest-600/80 dark:text-white/60">
                 {t('currentStreak')}
@@ -58,7 +57,7 @@ const HeroStreakCard: React.FC<HeroStreakCardProps> = ({ addiction, streak }) =>
             </div>
           </div>
           <div className="rounded-xl bg-white/85 dark:bg-white/10 ring-1 ring-forest-900/5 dark:ring-white/10 backdrop-blur-sm px-3 py-2.5 flex items-center gap-2.5">
-            <Medal size={18} className="text-brand-600 dark:text-brand-200 shrink-0" />
+            <span className="text-lg leading-none shrink-0" aria-hidden="true">🏅</span>
             <div className="min-w-0">
               <div className="text-[0.65rem] uppercase tracking-wide whitespace-nowrap text-forest-600/80 dark:text-white/60">
                 {t('bestStreak')}
