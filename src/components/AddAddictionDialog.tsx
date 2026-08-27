@@ -159,14 +159,14 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl animate-fade-in-up">
+      <div className="bg-white dark:bg-sage-800 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl animate-fade-in-up">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-sage-900 dark:text-white">
             {editingAddiction ? t('editAddiction') : t('addNewAddiction')}
           </h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200"
           >
             <X className="w-5 h-5" />
           </button>
@@ -174,7 +174,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
               {t('addictionName')}
             </label>
             <input
@@ -182,16 +182,16 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+              className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                        bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                        focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
               placeholder="e.g., Smoking, Social Media"
               required
             />
           </div>
           
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
               {t('chooseIcon')}
             </label>
             <IconPicker selectedIcon={icon} onSelectIcon={setIcon} />
@@ -199,7 +199,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           
           <div className="mb-4 grid grid-cols-5 gap-3">
             <div className="col-span-3">
-              <label htmlFor="cost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="cost" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                 {t('costPerEngagement')}
               </label>
               <input
@@ -209,25 +209,25 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                 onChange={(e) => setCost(e.target.value)}
                 min="0"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                          bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
                 placeholder="5.00"
                 required
               />
             </div>
             
             <div className="col-span-2">
-              <label htmlFor="costType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="costType" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                 {t('type')}
               </label>
               <select
                 id="costType"
                 value={costType}
                 onChange={(e) => setCostType(e.target.value as 'money' | 'time' | 'health')}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                          bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
               >
                 <option value="money">{t('money')}</option>
                 <option value="time">{t('time')}</option>
@@ -238,7 +238,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           
           <div className="mb-4 grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="lastEngaged" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="lastEngaged" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                 {t('lastEngagedDate')}
               </label>
               <input
@@ -247,14 +247,14 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                 value={formatDate(lastEngaged)}
                 onChange={(e) => setLastEngaged(new Date(e.target.value))}
                 max={formatDate(new Date())}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                          bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
                 required
               />
             </div>
             <div>
-              <label htmlFor="lastEngagedTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="lastEngagedTime" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                 {t('lastEngagedTime')}
               </label>
               <input
@@ -262,9 +262,9 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                 id="lastEngagedTime"
                 value={lastEngagedTime}
                 onChange={(e) => setLastEngagedTime(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                          bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
                 required
               />
             </div>
@@ -272,15 +272,15 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
 
           <div className="mb-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                 {t('goalType')}
               </label>
               <select
                 value={goalType}
                 onChange={(e) => setGoalType(e.target.value as 'time' | 'money')}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                          bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
               >
                 <option value="time">{t('timeGoal')}</option>
                 <option value="money">{t('moneyGoal')}</option>
@@ -289,7 +289,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="goalValue" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="goalValue" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                   {t('goalValue')}
                 </label>
                 <input
@@ -299,24 +299,24 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                   onChange={(e) => setGoalValue(e.target.value)}
                   min="1"
                   step="1"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="goalUnit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="goalUnit" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                   {t('goalUnit')}
                 </label>
                 <select
                   id="goalUnit"
                   value={goalUnit}
                   onChange={(e) => setGoalUnit(e.target.value as 'hours' | 'days' | 'weeks' | 'months' | 'dollars')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400"
+                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400"
                 >
                   {goalType === 'time' ? (
                     <>
@@ -334,7 +334,7 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
           </div>
           
           <div className="mb-6">
-            <label htmlFor="habitNote" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="habitNote" className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
               {t('habitNotes')}
             </label>
             <textarea
@@ -342,21 +342,21 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t('habitNotesPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400
+              className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                        bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                        focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:focus:ring-brand-400
                         resize-none h-24"
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-sage-500 dark:text-sage-400">
               {t('habitNotesHint')}
             </p>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
               {t('copingPlans')}
             </label>
-            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mb-2 text-xs text-sage-500 dark:text-sage-400">
               {t('copingPlansHint')}
             </p>
 
@@ -364,10 +364,10 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
               {copingPlans.map(plan => (
                 <div
                   key={plan.id}
-                  className="rounded-lg border border-gray-200 dark:border-gray-600 p-3 space-y-2"
+                  className="rounded-lg border border-sage-200 dark:border-sage-600 p-3 space-y-2"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-16 shrink-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    <span className="w-16 shrink-0 text-xs font-semibold text-sage-500 dark:text-sage-400">
                       {t('copingPlanCue')}
                     </span>
                     <input
@@ -375,13 +375,13 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                       value={plan.cue}
                       onChange={(e) => updateCopingPlan(plan.id, 'cue', e.target.value)}
                       placeholder={t('copingPlanCuePlaceholder')}
-                      className="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 min-w-0 px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                                bg-white dark:bg-sage-700 text-sage-900 dark:text-white text-sm
+                                focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-16 shrink-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    <span className="w-16 shrink-0 text-xs font-semibold text-sage-500 dark:text-sage-400">
                       {t('copingPlanAction')}
                     </span>
                     <input
@@ -389,9 +389,9 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                       value={plan.action}
                       onChange={(e) => updateCopingPlan(plan.id, 'action', e.target.value)}
                       placeholder={t('copingPlanActionPlaceholder')}
-                      className="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
-                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 min-w-0 px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                                bg-white dark:bg-sage-700 text-sage-900 dark:text-white text-sm
+                                focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     />
                     <button
                       type="button"
@@ -412,8 +412,8 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
               type="button"
               onClick={addCopingPlan}
               className="mt-3 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium
-                       bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200
-                       hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                       bg-sage-100 dark:bg-sage-700 text-sage-700 dark:text-sage-200
+                       hover:bg-sage-200 dark:hover:bg-sage-600 transition-colors"
             >
               <Plus size={16} />
               {t('addCopingPlan')}
@@ -424,16 +424,16 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 
-                        rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
+              className="px-4 py-2.5 border border-sage-200 dark:border-sage-600 text-sage-700 dark:text-sage-200 
+                        rounded-xl hover:bg-sage-100 dark:hover:bg-sage-700 
                         transition-colors duration-200"
             >
               {t('cancel')}
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white 
-                        rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 
+              className="px-5 py-2.5 bg-brand-700 dark:bg-brand-600 text-white font-semibold
+                        rounded-xl hover:bg-brand-800 dark:hover:bg-brand-500 
                         transition-colors duration-200"
             >
               {editingAddiction ? t('saveChanges') : t('add')}

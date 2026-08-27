@@ -18,7 +18,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({ percentage }) => {
     <div className="relative w-full h-full flex items-center justify-center">
       <svg className="transform -rotate-90 w-full h-full">
         <circle
-          className="text-gray-200 dark:text-gray-700"
+          className="text-sage-200 dark:text-sage-700"
           strokeWidth="5"
           stroke="currentColor"
           fill="transparent"
@@ -27,7 +27,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({ percentage }) => {
           cy="32"
         />
         <circle
-          className="text-blue-500 dark:text-blue-400"
+          className="text-brand-500 dark:text-brand-400"
           strokeWidth="5"
           strokeLinecap="round"
           stroke="currentColor"
@@ -42,7 +42,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({ percentage }) => {
           }}
         />
       </svg>
-      <div className="absolute text-xs font-medium text-gray-700 dark:text-gray-300">
+      <div className="absolute text-xs font-medium text-sage-700 dark:text-sage-300">
         {Math.round(validPercentage)}%
       </div>
     </div>

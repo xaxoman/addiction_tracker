@@ -101,3 +101,51 @@ export const getTopTriggers = (
 export const formatPercent = (rate: number | null): string => (
   rate === null ? '—' : `${Math.round(rate * 100)}%`
 );
+
+export interface UrgeIntensityBreakdown {
+  total: number;
+  low: number;
+  medium: number;
+  high: number;
+  // Urges logged without an intensity: real events, but nothing to bucket them
+  // by, so they get their own slice rather than being folded into "low".
+  unrated: number;
+}
+
+// Every urge logged in the period, split by how hard it hit. Both outcomes
+// count: an urge that ended in a slip was still an urge that was logged.
+export const summarizeUrgeIntensity = (
+  addictions: Addiction | Addiction[],
+  since?: Date
+): UrgeIntensityBreakdown => {
+  const list = Array.isArray(addictions) ? addictions : [addictions];
+  const breakdown: UrgeIntensityBreakdown = { total: 0, low: 0, medium: 0, high: 0, unrated: 0 };
+
+  list.forEach(addiction => {
+    getUrges(addiction).forEach(urge => {
+      if (!isWithin(urge.date, since)) return;
+
+      breakdown.total += 1;
+      const intensity = typeof urge.intensity === 'number' ? urge.intensity : undefined;
+
+      if (intensity === undefined) {
+        breakdown.unrated += 1;
+      } else if (intensity <= 2) {
+        breakdown.low += 1;
+      } else if (intensity === 3) {
+        breakdown.medium += 1;
+      } else {
+        breakdown.high += 1;
+      }
+    });
+  });
+
+  return breakdown;
+};
+
+export const startOfCurrentWeek = (now: Date = new Date()): Date => {
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay());
+  start.setHours(0, 0, 0, 0);
+  return start;
+};

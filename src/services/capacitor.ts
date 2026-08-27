@@ -81,6 +81,8 @@ export class CapacitorService {
       await StatusBar.setStyle({
         style: isDark ? Style.Dark : Style.Light
       });
+      // Keep the bar on the same paper as the page behind it.
+      await StatusBar.setBackgroundColor({ color: isDark ? '#151D18' : '#F6F8F5' });
     } catch (error) {
       console.warn('Status bar style not available:', error);
     }
@@ -104,7 +106,7 @@ export class CapacitorService {
   }
   private async initializeStatusBar(): Promise<void> {
     await StatusBar.setStyle({ style: Style.Dark });
-    await StatusBar.setBackgroundColor({ color: '#1f2937' });
+    await StatusBar.setBackgroundColor({ color: '#0A1712' });
     await StatusBar.setOverlaysWebView({ overlay: false });
   }
 
