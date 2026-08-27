@@ -58,8 +58,8 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
   if (addictions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-40 text-center p-4">
-        <p className="text-gray-500 dark:text-gray-400 mb-2">No addictions tracked yet</p>
-        <p className="text-sm text-gray-400 dark:text-gray-500">
+        <p className="text-sage-500 dark:text-sage-400 mb-2">No addictions tracked yet</p>
+        <p className="text-sm text-sage-400 dark:text-sage-500">
           Click the + button below to start tracking
         </p>
       </div>
@@ -80,7 +80,7 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
             draggedItemIndex === index 
               ? 'opacity-50 scale-95' 
               : dragOverItemIndex === index 
-                ? 'transform translate-y-2 border-2 border-blue-300 dark:border-blue-700 rounded-xl' 
+                ? 'transform translate-y-2 border-2 border-brand-300 dark:border-brand-700 rounded-xl' 
                 : ''
           } transition-all duration-200 ${isTouchDevice ? 'touch-auto' : 'cursor-grab active:cursor-grabbing'} touch-manipulation`}
           style={{ touchAction: isTouchDevice ? 'pan-y' : 'auto' }}

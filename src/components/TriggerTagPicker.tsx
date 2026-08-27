@@ -32,13 +32,13 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
     <div>
       {label !== '' && (
         <label className={`block text-sm font-medium mb-1 ${
-          onDark ? 'text-white/80' : 'text-gray-700 dark:text-gray-300'
+          onDark ? 'text-white/80' : 'text-sage-700 dark:text-sage-300'
         }`}>
           {label ?? t('triggers')}
         </label>
       )}
       {hint && (
-        <p className={`text-xs mb-2 ${onDark ? 'text-white/60' : 'text-gray-500 dark:text-gray-400'}`}>
+        <p className={`text-xs mb-2 ${onDark ? 'text-white/60' : 'text-sage-500 dark:text-sage-400'}`}>
           {hint}
         </p>
       )}
@@ -54,11 +54,11 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
               className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 isSelected
                   ? onDark
-                    ? 'bg-white text-gray-900 border-white'
-                    : 'bg-blue-500 border-blue-500 text-white dark:bg-blue-600 dark:border-blue-600'
+                    ? 'bg-white text-sage-900 border-white'
+                    : 'bg-brand-700 border-brand-700 text-white dark:bg-brand-600 dark:border-brand-600'
                   : onDark
                     ? 'bg-white/10 border-white/25 text-white/80 hover:bg-white/20'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-white border-sage-200 text-sage-700 hover:bg-sage-100 dark:bg-sage-700 dark:border-sage-600 dark:text-sage-200 dark:hover:bg-sage-600'
               }`}
             >
               {t(triggerLabelKey(tag))}
@@ -89,7 +89,7 @@ export const TriggerTagList: React.FC<TriggerTagListProps> = ({ tags, className 
         <span
           key={tag}
           className="px-2 py-0.5 rounded-full text-[0.7rem] font-medium
-                   bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200"
+                   bg-sage-200 text-sage-700 dark:bg-sage-600 dark:text-sage-200"
         >
           {t(triggerLabelKey(tag))}
         </span>

@@ -171,14 +171,14 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-sage-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-sage-200 dark:border-sage-700 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('settings')}</h2>
+          <h2 className="text-xl font-semibold text-sage-900 dark:text-white">{t('settings')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -186,22 +186,22 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
 
         <div className="space-y-6">
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('appearance')}</h3>
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('appearance')}</h3>
             <button
               onClick={toggleTheme}
-              className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200"
+              className="w-full flex items-center justify-between p-4 border border-sage-200 dark:border-sage-700 rounded-lg hover:bg-sage-50 dark:hover:bg-sage-700/50 transition-all duration-200"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-sage-100 dark:bg-sage-800 rounded-lg flex items-center justify-center">
                   {theme === 'light' ? (
                     <Sun className="w-5 h-5 text-amber-500" />
                   ) : (
-                    <Moon className="w-5 h-5 text-indigo-400" />
+                    <Moon className="w-5 h-5 text-brand-400" />
                   )}
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('theme')}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="font-medium text-sage-900 dark:text-white">{t('theme')}</div>
+                  <div className="text-sm text-sage-500 dark:text-sage-400">
                     {theme === 'light' ? t('switchToDark') : t('switchToLight')}
                   </div>
                 </div>
@@ -210,21 +210,21 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('language')}</h3>
-            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('language')}</h3>
+            <div className="w-full p-4 border border-sage-200 dark:border-sage-700 rounded-lg">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-                  <Languages className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-10 h-10 bg-brand-50 dark:bg-brand-500/15 rounded-xl flex items-center justify-center">
+                  <Languages className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('appLanguage')}</div>
+                  <div className="font-medium text-sage-900 dark:text-white">{t('appLanguage')}</div>
                 </div>
               </div>
 
               <select
                 value={language}
                 onChange={(event) => setLanguage(event.target.value === 'it' ? 'it' : 'en')}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white"
               >
                 <option value="en">English</option>
                 <option value="it">Italiano</option>
@@ -233,10 +233,10 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('dailyCheckIn')}</h3>
-            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('dailyCheckIn')}</h3>
+            <div className="w-full p-4 border border-sage-200 dark:border-sage-700 rounded-lg space-y-3">
               <label className="flex items-center justify-between gap-3">
-                <span className="text-sm text-gray-900 dark:text-white">{t('enableDailyCheckIn')}</span>
+                <span className="text-sm text-sage-900 dark:text-white">{t('enableDailyCheckIn')}</span>
                 <input
                   type="checkbox"
                   checked={dailyCheckInEnabled}
@@ -246,18 +246,18 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
               </label>
 
               <label className="block">
-                <span className="text-sm text-gray-900 dark:text-white">{t('reminderTime')}</span>
+                <span className="text-sm text-sage-900 dark:text-white">{t('reminderTime')}</span>
                 <input
                   type="time"
                   value={dailyCheckInTime}
                   onChange={(event) => setDailyCheckInTime(event.target.value)}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="mt-1 w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white"
                 />
               </label>
 
               <button
                 onClick={handleRequestPermission}
-                className="w-full flex items-center justify-center gap-2 p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors"
+                className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-800 dark:text-brand-200 hover:bg-brand-200 dark:hover:bg-brand-900/60 transition-colors"
               >
                 <Bell className="w-4 h-4" />
                 <span>{t('requestPermission')}</span>
@@ -266,12 +266,12 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('riskNudges')}</h3>
-            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('riskNudgesDesc')}</p>
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('riskNudges')}</h3>
+            <div className="w-full p-4 border border-sage-200 dark:border-sage-700 rounded-lg space-y-3">
+              <p className="text-xs text-sage-500 dark:text-sage-400">{t('riskNudgesDesc')}</p>
 
               <label className="flex items-center justify-between gap-3">
-                <span className="text-sm text-gray-900 dark:text-white">{t('enableRiskNudges')}</span>
+                <span className="text-sm text-sage-900 dark:text-white">{t('enableRiskNudges')}</span>
                 <input
                   type="checkbox"
                   checked={riskNudgesEnabled}
@@ -281,17 +281,17 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
               </label>
 
               {riskWindows.length === 0 ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('riskNudgesNoData')}</p>
+                <p className="text-xs text-sage-500 dark:text-sage-400">{t('riskNudgesNoData')}</p>
               ) : (
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                  <p className="text-xs text-sage-500 dark:text-sage-400 mb-1.5">
                     {riskNudgesEnabled ? t('riskNudgesScheduled') : t('riskyWindows')}
                   </p>
                   <ul className="space-y-1">
                     {riskWindows.map((window) => (
                       <li
                         key={`${window.weekday}-${window.hour}`}
-                        className="flex items-center justify-between gap-2 text-sm text-gray-900 dark:text-white"
+                        className="flex items-center justify-between gap-2 text-sm text-sage-900 dark:text-white"
                       >
                         <span className="flex items-center gap-2">
                           <Zap className="w-3.5 h-3.5 text-amber-500" />
@@ -307,10 +307,10 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('milestoneAlerts')}</h3>
-            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('milestoneAlerts')}</h3>
+            <div className="w-full p-4 border border-sage-200 dark:border-sage-700 rounded-lg">
               <label className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+                <span className="flex items-center gap-2 text-sm text-sage-900 dark:text-white">
                   <Target className="w-4 h-4 text-amber-500" />
                   {t('enableMilestoneAlerts')}
                 </span>
@@ -325,29 +325,29 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('emergencyContact')}</h3>
-            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('emergencyContactDesc')}</p>
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('emergencyContact')}</h3>
+            <div className="w-full p-4 border border-sage-200 dark:border-sage-700 rounded-lg space-y-3">
+              <p className="text-xs text-sage-500 dark:text-sage-400">{t('emergencyContactDesc')}</p>
 
               <label className="block">
-                <span className="text-sm text-gray-900 dark:text-white">{t('emergencyContactName')}</span>
+                <span className="text-sm text-sage-900 dark:text-white">{t('emergencyContactName')}</span>
                 <input
                   type="text"
                   value={contactName}
                   onChange={(event) => setContactName(event.target.value)}
                   onBlur={() => setEmergencyContact({ name: contactName, phone: contactPhone })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="mt-1 w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white"
                 />
               </label>
 
               <label className="block">
-                <span className="text-sm text-gray-900 dark:text-white">{t('emergencyContactPhone')}</span>
+                <span className="text-sm text-sage-900 dark:text-white">{t('emergencyContactPhone')}</span>
                 <input
                   type="tel"
                   value={contactPhone}
                   onChange={(event) => setContactPhone(event.target.value)}
                   onBlur={() => setEmergencyContact({ name: contactName, phone: contactPhone })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="mt-1 w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white"
                 />
               </label>
 
@@ -368,7 +368,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('backups')}</h3>
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('backups')}</h3>
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 rounded-lg">
               <div className="flex items-start gap-3">
                 <Clock className="w-4 h-4 mt-0.5 text-amber-700 dark:text-amber-300" />
@@ -384,28 +384,28 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
               <button
                 onClick={handleCreateBackup}
                 disabled={isHandlingBackup}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-3 p-4 border border-sage-200 dark:border-sage-700 rounded-lg hover:bg-sage-50 dark:hover:bg-sage-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
                   <Download className="w-5 h-5 text-amber-700 dark:text-amber-300" />
                 </div>
                 <div className="text-left flex-1">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('createBackup')}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{t('createBackupDesc')}</div>
+                  <div className="font-medium text-sage-900 dark:text-white">{t('createBackup')}</div>
+                  <div className="text-sm text-sage-500 dark:text-sage-400">{t('createBackupDesc')}</div>
                 </div>
               </button>
 
               <button
                 onClick={() => backupFileInputRef.current?.click()}
                 disabled={isHandlingBackup}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-3 p-4 border border-sage-200 dark:border-sage-700 rounded-lg hover:bg-sage-50 dark:hover:bg-sage-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg flex items-center justify-center">
                   <Upload className="w-5 h-5 text-cyan-700 dark:text-cyan-300" />
                 </div>
                 <div className="text-left flex-1">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('importBackup')}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{t('importBackupDesc')}</div>
+                  <div className="font-medium text-sage-900 dark:text-white">{t('importBackup')}</div>
+                  <div className="text-sm text-sage-500 dark:text-sage-400">{t('importBackupDesc')}</div>
                 </div>
               </button>
             </div>
@@ -420,36 +420,36 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('dataManagement')}</h3>
+            <h3 className="text-sm font-medium text-sage-700 dark:text-sage-300">{t('dataManagement')}</h3>
             <div className="grid grid-cols-1 gap-3">
               <button
                 onClick={() => handleExport('csv')}
                 disabled={isExporting || addictions.length === 0}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-3 p-4 border border-sage-200 dark:border-sage-700 rounded-lg hover:bg-sage-50 dark:hover:bg-sage-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <div className="w-10 h-10 bg-brand-100 dark:bg-brand-900/30 rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                 </div>
                 <div className="text-left flex-1">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('exportCsv')}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{t('exportCsvDesc')}</div>
+                  <div className="font-medium text-sage-900 dark:text-white">{t('exportCsv')}</div>
+                  <div className="text-sm text-sage-500 dark:text-sage-400">{t('exportCsvDesc')}</div>
                 </div>
-                <Download className="w-4 h-4 text-gray-400" />
+                <Download className="w-4 h-4 text-sage-400" />
               </button>
 
               <button
                 onClick={() => handleExport('tsv')}
                 disabled={isExporting || addictions.length === 0}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-3 p-4 border border-sage-200 dark:border-sage-700 rounded-lg hover:bg-sage-50 dark:hover:bg-sage-700/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <Table className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="w-10 h-10 bg-brand-100 dark:bg-brand-500/15 rounded-xl flex items-center justify-center">
+                  <Table className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                 </div>
                 <div className="text-left flex-1">
-                  <div className="font-medium text-gray-900 dark:text-white">{t('exportTsv')}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{t('exportTsvDesc')}</div>
+                  <div className="font-medium text-sage-900 dark:text-white">{t('exportTsv')}</div>
+                  <div className="text-sm text-sage-500 dark:text-sage-400">{t('exportTsvDesc')}</div>
                 </div>
-                <Download className="w-4 h-4 text-gray-400" />
+                <Download className="w-4 h-4 text-sage-400" />
               </button>
             </div>
           </div>

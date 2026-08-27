@@ -1,50 +1,25 @@
 import React, { useMemo } from 'react';
-import { LineChart, BarChart, Download } from 'lucide-react';
+import { Download, Flame, PiggyBank } from 'lucide-react';
 import { Addiction } from '../types';
 import { exportAddictionsToCSV } from '../utils/exportData';
+import { getDaysSince, getSavedAmount } from '../utils/format';
 import { useI18n } from '../i18n/useI18n';
 
 interface StatsSectionProps {
   addictions: Addiction[];
 }
 
+// Totals across every tracker, next to the per-tracker cards above them.
 const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
   const { t } = useI18n();
 
-  const totalSavings = useMemo(() => {
-    return addictions.reduce((total, addiction) => {
-      if (addiction.costType !== 'money') return total;
-      
-      const lastEngaged = new Date(addiction.lastEngaged);
-      const now = new Date();
-      
-      // Validate dates and cost
-      if (isNaN(now.getTime()) || isNaN(lastEngaged.getTime())) return total;
-      
-      const costValue = typeof addiction.cost === 'number' && !isNaN(addiction.cost) ? addiction.cost : 0;
-      const diffTime = Math.abs(now.getTime() - lastEngaged.getTime());
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      const savings = costValue * diffDays;
-      return total + (isNaN(savings) ? 0 : Math.max(0, savings));
-    }, 0);
-  }, [addictions]);
-  
-  const longestStreak = useMemo(() => {
-    if (addictions.length === 0) return 0;
-    
-    return Math.max(...addictions.map(addiction => {
-      const lastEngaged = new Date(addiction.lastEngaged);
-      const now = new Date();
-      
-      // Validate dates
-      if (isNaN(now.getTime()) || isNaN(lastEngaged.getTime())) return 0;
-      
-      const diffTime = Math.abs(now.getTime() - lastEngaged.getTime());
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      return isNaN(diffDays) ? 0 : Math.max(0, diffDays);
-    }));
-  }, [addictions]);
+  const totalSavings = useMemo(() => addictions.reduce((total, addiction) => (
+    addiction.costType === 'money' ? total + getSavedAmount(addiction) : total
+  ), 0), [addictions]);
+
+  const longestStreak = useMemo(() => (
+    addictions.reduce((best, addiction) => Math.max(best, getDaysSince(addiction.lastEngaged)), 0)
+  ), [addictions]);
 
   const handleQuickExport = () => {
     try {
@@ -63,44 +38,44 @@ const StatsSection: React.FC<StatsSectionProps> = ({ addictions }) => {
   }
 
   return (
-    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-medium text-blue-800 dark:text-blue-300">{t('yourProgress')}</h2>
-        
+    <section className="card p-5">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="card-title">{t('yourTotals')}</h2>
+
         <button
           onClick={handleQuickExport}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg
-                   bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300
-                   hover:bg-blue-200 dark:hover:bg-blue-800/70 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full
+                   border border-sage-200 dark:border-sage-600 text-sage-600 dark:text-sage-300
+                   hover:bg-sage-100 dark:hover:bg-sage-700 transition-colors"
           title="Quick export to CSV"
         >
-          <Download size={12} />
+          <Download size={13} />
           <span>{t('export')}</span>
         </button>
       </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
-          <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-            <BarChart size={16} />
-            <span className="text-sm font-medium">{t('moneySaved')}</span>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-brand-50 dark:bg-brand-900/40 p-4">
+          <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300 mb-1">
+            <PiggyBank size={16} />
+            <span className="text-xs font-medium">{t('moneySaved')}</span>
           </div>
-          <p className="text-xl font-bold text-gray-800 dark:text-white">
+          <p className="text-2xl font-bold text-sage-900 dark:text-white">
             ${isNaN(totalSavings) ? '0.00' : totalSavings.toFixed(2)}
           </p>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-            <LineChart size={16} />
-            <span className="text-sm font-medium">{t('longestStreak')}</span>
+
+        <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 p-4">
+          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 mb-1">
+            <Flame size={16} />
+            <span className="text-xs font-medium">{t('longestStreak')}</span>
           </div>
-          <p className="text-xl font-bold text-gray-800 dark:text-white">
-            {isNaN(longestStreak) ? 0 : longestStreak} {t('days')}
+          <p className="text-2xl font-bold text-sage-900 dark:text-white">
+            {longestStreak} <span className="text-base font-medium text-sage-500 dark:text-sage-400">{t('days')}</span>
           </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

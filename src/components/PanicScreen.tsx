@@ -5,35 +5,11 @@ import { useI18n } from '../i18n/useI18n';
 import { formatClock, getDaysSince, getSavedLabel } from '../utils/format';
 import { formatCountdown, getMilestoneState } from '../utils/milestones';
 import TriggerTagPicker from './TriggerTagPicker';
+import { getBreathState } from '../utils/breathing';
 
 // Cravings rise and fall; ten minutes is long enough for the peak to pass and
 // short enough that somebody mid-craving will agree to it.
 const SESSION_SECONDS = 10 * 60;
-
-// 4-7-8 breathing. The pacer is driven off elapsed time rather than chained
-// timeouts so it cannot drift over a ten-minute session.
-const BREATH_PHASES = [
-  { key: 'breatheIn', seconds: 4, from: 0.55, to: 1 },
-  { key: 'breatheHold', seconds: 7, from: 1, to: 1 },
-  { key: 'breatheOut', seconds: 8, from: 1, to: 0.55 }
-] as const;
-
-const BREATH_CYCLE_SECONDS = BREATH_PHASES.reduce((total, phase) => total + phase.seconds, 0);
-
-const getBreathState = (elapsedSeconds: number): { key: string; scale: number } => {
-  const intoCycle = elapsedSeconds % BREATH_CYCLE_SECONDS;
-
-  let offset = 0;
-  for (const phase of BREATH_PHASES) {
-    if (intoCycle < offset + phase.seconds) {
-      const progress = (intoCycle - offset) / phase.seconds;
-      return { key: phase.key, scale: phase.from + (phase.to - phase.from) * progress };
-    }
-    offset += phase.seconds;
-  }
-
-  return { key: BREATH_PHASES[0].key, scale: BREATH_PHASES[0].from };
-};
 
 export interface UrgeOutcomePayload {
   intensity?: number;
@@ -121,7 +97,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
             aria-pressed={intensity === level}
             className={`flex-1 py-3 rounded-xl text-base font-semibold border transition-colors ${
               intensity === level
-                ? 'bg-white text-gray-900 border-white'
+                ? 'bg-white text-sage-900 border-white'
                 : 'bg-white/10 border-white/25 text-white/80 hover:bg-white/20'
             }`}
           >
@@ -138,7 +114,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[200] overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 text-white"
+      className="fixed inset-0 z-[200] overflow-y-auto bg-gradient-to-br from-forest-500 via-forest-700 to-forest-900 text-white"
       role="dialog"
       aria-modal="true"
       aria-label={t('panicTitle')}
@@ -183,7 +159,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
                   r="46"
                   fill="none"
                   stroke="currentColor"
-                  className="text-emerald-400"
+                  className="text-brand-300"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 46}`}
@@ -191,7 +167,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
                 />
               </svg>
               <div
-                className="absolute w-40 h-40 rounded-full bg-emerald-400/20 border border-emerald-300/30"
+                className="absolute w-40 h-40 rounded-full bg-brand-400/25 border border-brand-200/30"
                 // The pacer transitions between sampled scales rather than
                 // animating in CSS, so the phase label and the circle can never
                 // fall out of step.
@@ -281,8 +257,8 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setStep('resisted')}
-                className="w-full rounded-2xl bg-emerald-500 px-4 py-4 text-lg font-semibold
-                         hover:bg-emerald-400 transition-colors"
+                className="w-full rounded-2xl bg-white px-4 py-4 text-lg font-semibold text-forest-700
+                         hover:bg-brand-50 transition-colors"
               >
                 {t('panicResisted')}
               </button>
@@ -318,7 +294,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
                 onChange={event => setNote(event.target.value)}
                 placeholder={t('urgeNotePlaceholder')}
                 className="w-full rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-white
-                         placeholder:text-white/40 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400
+                         placeholder:text-white/40 focus:ring-2 focus:ring-brand-400 focus:border-brand-400
                          resize-none h-24"
               />
             </div>
@@ -327,7 +303,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               <button
                 type="button"
                 onClick={() => onResisted(buildPayload())}
-                className="w-full rounded-2xl bg-emerald-500 px-4 py-4 text-lg font-semibold hover:bg-emerald-400 transition-colors"
+                className="w-full rounded-2xl bg-white px-4 py-4 text-lg font-semibold text-forest-700 hover:bg-brand-50 transition-colors"
               >
                 {t('save')}
               </button>

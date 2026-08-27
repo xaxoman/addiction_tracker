@@ -243,8 +243,8 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
               onClick={() => setSelectedId(addiction.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium whitespace-nowrap transition-colors ${
                 isActive
-                  ? 'bg-blue-500 border-blue-500 text-white dark:bg-blue-600 dark:border-blue-600'
-                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
+                  ? 'bg-brand-700 border-brand-700 text-white dark:bg-brand-600 dark:border-brand-600'
+                  : 'bg-white border-sage-200 text-sage-700 hover:bg-sage-100 dark:bg-sage-800 dark:border-sage-700 dark:text-sage-300 dark:hover:bg-sage-700'
               }`}
             >
               <span>{addiction.icon}</span>
@@ -255,8 +255,8 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
       </div>
 
       {allTime.total > 0 && (
-        <section className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
-          <p className="text-base font-medium text-emerald-900 dark:text-emerald-200">
+        <section className="rounded-2xl bg-brand-50 dark:bg-brand-900/25 p-5 border border-brand-100 dark:border-brand-800/60">
+          <p className="text-base font-medium text-brand-900 dark:text-brand-100">
             {/* A month with nothing in it yet would read as "you beat 0 of 0", so
                 fall back to the all-time count until there is something to say. */}
             {monthly.total > 0
@@ -266,38 +266,38 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
         </section>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('currentStreak')}</div>
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {currentStreakDays} <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('days')}</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="card p-5">
+          <div className="card-label mb-1.5">{t('currentStreak')}</div>
+          <div className="text-2xl font-bold text-brand-700 dark:text-brand-300">
+            {currentStreakDays} <span className="text-sm font-medium text-sage-500 dark:text-sage-400">{t('days')}</span>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('urgesResisted')}</div>
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{allTime.resisted}</div>
+        <div className="card p-5">
+          <div className="card-label mb-1.5">{t('urgesResisted')}</div>
+          <div className="text-2xl font-bold text-brand-700 dark:text-brand-300">{allTime.resisted}</div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('relapsesRecorded')}</div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{relapseCount}</div>
+        <div className="card p-5">
+          <div className="card-label mb-1.5">{t('relapsesRecorded')}</div>
+          <div className="text-2xl font-bold text-sage-900 dark:text-white">{relapseCount}</div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('resistedRate')}</div>
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+        <div className="card p-5">
+          <div className="card-label mb-1.5">{t('resistedRate')}</div>
+          <div className="text-2xl font-bold text-brand-700 dark:text-brand-300">
             {formatPercent(allTime.resistedRate)}
           </div>
         </div>
       </div>
 
-      <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('checkInTrend')}</h3>
+      <section className="card p-5">
+        <h3 className="card-title mb-3">{t('checkInTrend')}</h3>
         {checkIns.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t('noCheckInsYet')}</p>
+          <p className="text-sm text-sage-500 dark:text-sage-400">{t('noCheckInsYet')}</p>
         ) : (
           <>
-            <div className="flex items-center gap-4 mb-2 text-[11px] text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-4 mb-2 text-[11px] text-sage-500 dark:text-sage-400">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400" />
+                <span className="w-2 h-2 rounded-full bg-brand-600 dark:bg-brand-400" />
                 {t('moodLabel')}
               </span>
               <span className="flex items-center gap-1.5">
@@ -305,14 +305,14 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
                 {t('cravingLabel')}
               </span>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-2">
+            <div className="bg-sage-50 dark:bg-sage-900/40 rounded-xl p-3">
               <div className="grid grid-cols-14 gap-1 h-24 items-end">
                 {checkInSeries.map(day => (
                   <div key={day.key} className="flex items-end justify-center gap-0.5 h-full" title={day.key}>
                     {day.entry ? (
                       <>
                         <div
-                          className="w-1/2 rounded-t bg-blue-400 dark:bg-blue-500"
+                          className="w-1/2 rounded-t bg-brand-500 dark:bg-brand-400"
                           style={{ height: `${(day.entry.mood / 5) * 100}%` }}
                         />
                         <div
@@ -324,12 +324,12 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
                         />
                       </>
                     ) : (
-                      <div className="w-full h-1 rounded bg-gray-200 dark:bg-gray-700" />
+                      <div className="w-full h-1 rounded bg-sage-200 dark:bg-sage-700" />
                     )}
                   </div>
                 ))}
               </div>
-              <div className="mt-2 flex justify-between text-[10px] text-gray-500 dark:text-gray-400">
+              <div className="mt-2 flex justify-between text-[10px] text-sage-500 dark:text-sage-400">
                 <span>{checkInSeries[0]?.label}</span>
                 <span>{checkInSeries[checkInSeries.length - 1]?.label}</span>
               </div>
@@ -338,25 +338,25 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
         )}
       </section>
 
-      <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('streakTrend')}</h3>
-        <div className="w-full bg-gray-50 dark:bg-gray-900/40 rounded-lg p-2">
+      <section className="card p-5">
+        <h3 className="card-title mb-3">{t('streakTrend')}</h3>
+        <div className="w-full bg-sage-50 dark:bg-sage-900/40 rounded-xl p-3">
           <svg viewBox="0 0 100 40" className="w-full h-32" preserveAspectRatio="none">
             <polygon
               fill="currentColor"
-              className="text-blue-500"
+              className="text-brand-500 dark:text-brand-400"
               fillOpacity="0.1"
               points={`0,40 ${linePoints} 100,40`}
             />
             <polyline
               fill="none"
               stroke="currentColor"
-              className="text-blue-500"
+              className="text-brand-500 dark:text-brand-400"
               strokeWidth="1.5"
               points={linePoints}
             />
           </svg>
-          <div className="mt-2 flex justify-between text-[10px] text-gray-500 dark:text-gray-400">
+          <div className="mt-2 flex justify-between text-[10px] text-sage-500 dark:text-sage-400">
             <span>{streakPoints[0]?.label}</span>
             <span>{streakPoints[streakPoints.length - 1]?.label}</span>
           </div>
@@ -364,11 +364,11 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
       </section>
 
       {hasWeeklyEvents && (
-        <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('eventsByWeek')}</h3>
-          <div className="flex items-center gap-4 mb-2 text-[11px] text-gray-500 dark:text-gray-400">
+        <section className="card p-5">
+          <h3 className="card-title mb-3">{t('eventsByWeek')}</h3>
+          <div className="flex items-center gap-4 mb-2 text-[11px] text-sage-500 dark:text-sage-400">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-brand-500 dark:bg-brand-400" />
               {t('urgeResisted')}
             </span>
             <span className="flex items-center gap-1.5">
@@ -376,12 +376,12 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
               {t('legendRelapse')}
             </span>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-2">
+          <div className="bg-sage-50 dark:bg-sage-900/40 rounded-xl p-3">
             <div className="grid grid-cols-12 gap-1 h-24 items-end">
               {weeklyPoints.map((point) => (
                 <div key={point.label} className="flex flex-col items-center justify-end h-full">
                   <div
-                    className="w-full rounded-t bg-emerald-400 dark:bg-emerald-500"
+                    className="w-full rounded-t bg-brand-400 dark:bg-brand-500"
                     style={{ height: `${(point.resisted / maxWeeklyEvents) * 100}%` }}
                     title={`${point.label}: ${point.resisted} ${t('urgeResisted')}`}
                   />
@@ -393,7 +393,7 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex justify-between text-[10px] text-gray-500 dark:text-gray-400">
+            <div className="mt-2 flex justify-between text-[10px] text-sage-500 dark:text-sage-400">
               <span>{weeklyPoints[0]?.label}</span>
               <span>{weeklyPoints[weeklyPoints.length - 1]?.label}</span>
             </div>
@@ -401,29 +401,29 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
         </section>
       )}
 
-      <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('topTriggers')}</h3>
+      <section className="card p-5">
+        <h3 className="card-title mb-3">{t('topTriggers')}</h3>
         {topTriggers.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t('noTriggerData')}</p>
+          <p className="text-sm text-sage-500 dark:text-sage-400">{t('noTriggerData')}</p>
         ) : (
           <ul className="space-y-2">
             {topTriggers.map((trigger) => (
               <li key={trigger.tag} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-sage-900 dark:text-white">
                     {t(triggerLabelKey(trigger.tag))}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-sage-500 dark:text-sage-400">
                     {t('triggerSlipShare', { slips: trigger.slips, total: trigger.total })}
                   </div>
                 </div>
-                <div className="w-24 shrink-0 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden flex">
+                <div className="w-24 shrink-0 h-2 rounded-full bg-sage-100 dark:bg-sage-700 overflow-hidden flex">
                   <div
                     className="h-full bg-rose-400 dark:bg-rose-500"
                     style={{ width: `${(trigger.slips / trigger.total) * 100}%` }}
                   />
                   <div
-                    className="h-full bg-emerald-400 dark:bg-emerald-500"
+                    className="h-full bg-brand-400 dark:bg-brand-500"
                     style={{ width: `${((trigger.total - trigger.slips) / trigger.total) * 100}%` }}
                   />
                 </div>
@@ -433,18 +433,18 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
         )}
       </section>
 
-      <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('riskyWindows')}</h3>
+      <section className="card p-5">
+        <h3 className="card-title mb-3">{t('riskyWindows')}</h3>
         {riskWindows.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t('riskNudgesNoData')}</p>
+          <p className="text-sm text-sage-500 dark:text-sage-400">{t('riskNudgesNoData')}</p>
         ) : (
           <ul className="space-y-2">
             {riskWindows.map((window) => (
               <li
                 key={`${window.weekday}-${window.hour}`}
-                className="flex items-center justify-between gap-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5"
               >
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                <span className="text-sm font-medium text-sage-900 dark:text-white">
                   {getWeekdayLabel(window.weekday, t)}
                 </span>
                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-300 tabular-nums">
@@ -457,24 +457,24 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
       </section>
 
       {relapseCount > 0 ? (
-        <section className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('bestWorstDays')}</h3>
+        <section className="card p-5">
+          <h3 className="card-title mb-3">{t('bestWorstDays')}</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
-              <div className="text-xs font-medium text-green-700 dark:text-green-400 mb-1">{t('bestDay')}</div>
-              <div className="text-base font-semibold text-gray-900 dark:text-white">{dayStats.best?.label}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{dayStats.best?.value ?? 0} {t('relapses')}</div>
+            <div className="rounded-xl bg-brand-50 dark:bg-brand-900/25 p-3">
+              <div className="text-xs font-medium text-brand-700 dark:text-brand-400 mb-1">{t('bestDay')}</div>
+              <div className="text-base font-semibold text-sage-900 dark:text-white">{dayStats.best?.label}</div>
+              <div className="text-xs text-sage-500 dark:text-sage-400">{dayStats.best?.value ?? 0} {t('relapses')}</div>
             </div>
-            <div className="rounded-lg bg-rose-50 dark:bg-rose-900/20 p-3">
+            <div className="rounded-xl bg-rose-50 dark:bg-rose-900/25 p-3">
               <div className="text-xs font-medium text-rose-700 dark:text-rose-400 mb-1">{t('worstDay')}</div>
-              <div className="text-base font-semibold text-gray-900 dark:text-white">{dayStats.worst?.label}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{dayStats.worst?.value ?? 0} {t('relapses')}</div>
+              <div className="text-base font-semibold text-sage-900 dark:text-white">{dayStats.worst?.label}</div>
+              <div className="text-xs text-sage-500 dark:text-sage-400">{dayStats.worst?.value ?? 0} {t('relapses')}</div>
             </div>
           </div>
         </section>
       ) : (
-        <section className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">{t('noRelapsesYet')}</p>
+        <section className="card p-6 text-center">
+          <p className="text-sm text-sage-600 dark:text-sage-400">{t('noRelapsesYet')}</p>
         </section>
       )}
     </div>

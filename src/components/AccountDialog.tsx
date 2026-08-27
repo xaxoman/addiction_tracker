@@ -117,9 +117,9 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
     synced: {
       icon: CheckCircle2,
       label: t('cloudSyncSynced'),
-      iconClass: 'text-emerald-600 dark:text-emerald-400',
-      boxClass: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/40',
-      textClass: 'text-emerald-900 dark:text-emerald-100'
+      iconClass: 'text-brand-600 dark:text-brand-400',
+      boxClass: 'bg-brand-50 dark:bg-brand-900/20 border-brand-100 dark:border-brand-900/40',
+      textClass: 'text-brand-900 dark:text-brand-100'
     },
     offline: {
       icon: CloudOff,
@@ -146,14 +146,14 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-sage-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-sage-200 dark:border-sage-700 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('cloudAccount')}</h2>
+          <h2 className="text-xl font-semibold text-sage-900 dark:text-white">{t('cloudAccount')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -162,17 +162,17 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
         {session ? (
           <div className="space-y-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white text-lg font-semibold uppercase shrink-0">
+              <div className="w-12 h-12 rounded-full bg-brand-600 flex items-center justify-center text-white text-lg font-semibold uppercase shrink-0">
                 {session.email.charAt(0)}
               </div>
               <div className="min-w-0">
-                <div className="text-sm text-gray-500 dark:text-gray-400">{t('signedInAs')}</div>
-                <div className="font-medium text-gray-900 dark:text-white break-all">{session.email}</div>
+                <div className="text-sm text-sage-500 dark:text-sage-400">{t('signedInAs')}</div>
+                <div className="font-medium text-sage-900 dark:text-white break-all">{session.email}</div>
               </div>
             </div>
 
             {notice && (
-              <p className="text-sm text-emerald-700 dark:text-emerald-300 text-center">{notice}</p>
+              <p className="text-sm text-brand-700 dark:text-brand-300 text-center">{notice}</p>
             )}
 
             <div className={`p-4 border rounded-lg ${sync.boxClass}`}>
@@ -204,7 +204,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
               <div className="w-14 h-14 bg-sky-100 dark:bg-sky-900/30 rounded-full flex items-center justify-center">
                 <Cloud className="w-7 h-7 text-sky-600 dark:text-sky-400" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-sage-600 dark:text-sage-400">
                 {mode === 'signin' ? t('cloudAccountDesc') : t('cloudAccountSignUpDesc')}
               </p>
             </div>
@@ -216,7 +216,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
               placeholder={t('accountEmail')}
               autoComplete="email"
               required
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full px-3 py-2.5 border border-sage-200 dark:border-sage-600 rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white placeholder-sage-400"
             />
 
             <input
@@ -227,7 +227,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               required
               minLength={8}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full px-3 py-2.5 border border-sage-200 dark:border-sage-600 rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white placeholder-sage-400"
             />
 
             {formError && (
@@ -239,7 +239,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={isCloudBusy}
-              className="w-full p-3 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full p-3 rounded-xl bg-brand-700 text-white font-semibold hover:bg-brand-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCloudBusy ? t('pleaseWait') : mode === 'signin' ? t('signIn') : t('createAccount')}
             </button>
@@ -251,7 +251,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({ isOpen, onClose }) => {
                 setFormError(null);
               }}
               disabled={isCloudBusy}
-              className="w-full text-sm text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
+              className="w-full text-sm text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50"
             >
               {mode === 'signin' ? t('switchToSignUp') : t('switchToSignIn')}
             </button>

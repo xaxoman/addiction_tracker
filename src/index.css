@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-sage-50 text-sage-900 dark:bg-sage-900 dark:text-sage-100;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Native controls (checkboxes, radios, range inputs) follow the brand green
+     instead of the browser's default blue. */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'] {
+    accent-color: #19583B;
+  }
+}
+
+@layer components {
+  /* The one card shape the whole app uses: soft corners, hairline border and
+     a shadow light enough to read as paper rather than a panel. */
+  .card {
+    @apply rounded-2xl bg-white dark:bg-sage-800 border border-sage-200/80 dark:border-sage-700/80 shadow-card;
+  }
+
+  .card-title {
+    @apply text-base font-semibold text-sage-900 dark:text-white;
+  }
+
+  .card-label {
+    @apply text-xs font-medium uppercase tracking-wide text-sage-400 dark:text-sage-500;
+  }
+
+  /* Compact select used in card headers (chart range, urge-log period). */
+  .pill-select {
+    @apply appearance-none rounded-full border border-sage-200 dark:border-sage-600
+           bg-white dark:bg-sage-700 pl-3 pr-8 py-1.5 text-xs font-medium
+           text-sage-700 dark:text-sage-200 cursor-pointer
+           focus:outline-none focus:ring-2 focus:ring-brand-500/40;
+  }
+}
+
 /* Safe area support for mobile devices */
 :root {
   --safe-area-inset-top: 0px;

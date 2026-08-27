@@ -394,7 +394,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
   const renderIntensityPicker = () => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
         {t('howStrongWasIt')}
       </label>
       <div className="flex gap-2">
@@ -406,15 +406,15 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             aria-pressed={urgeIntensity === level}
             className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
               urgeIntensity === level
-                ? 'bg-blue-500 border-blue-500 text-white dark:bg-blue-600 dark:border-blue-600'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
+                ? 'bg-brand-700 border-brand-700 text-white dark:bg-brand-600 dark:border-brand-600'
+                : 'bg-white border-sage-200 text-sage-700 hover:bg-sage-100 dark:bg-sage-700 dark:border-sage-600 dark:text-sage-200 dark:hover:bg-sage-600'
             }`}
           >
             {level}
           </button>
         ))}
       </div>
-      <div className="flex justify-between mt-1 text-[0.7rem] text-gray-400 dark:text-gray-500">
+      <div className="flex justify-between mt-1 text-[0.7rem] text-sage-400 dark:text-sage-500">
         <span>{t('intensityMild')}</span>
         <span>{t('intensityIntense')}</span>
       </div>
@@ -434,25 +434,25 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
         key={event.id}
         className={`flex items-start justify-between gap-3 rounded-lg p-3 ${
           isUrge
-            ? 'bg-emerald-50 dark:bg-emerald-900/20'
+            ? 'bg-brand-50 dark:bg-brand-900/20'
             : 'bg-rose-50 dark:bg-rose-900/20'
         }`}
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center gap-1 text-xs font-semibold ${
-              isUrge ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'
+              isUrge ? 'text-brand-700 dark:text-brand-300' : 'text-rose-700 dark:text-rose-300'
             }`}>
               {isUrge ? <ShieldCheck size={13} /> : <RefreshCw size={13} />}
               {isUrge ? t('urgeResisted') : t('legendRelapse')}
             </span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <span className="text-sm font-medium text-sage-900 dark:text-white">
               {showDate ? event.date.toLocaleString(locale) : formatEventTime(event.date)}
             </span>
           </div>
 
           {isUrge && event.urge.intensity !== undefined && (
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-1 text-xs text-sage-500 dark:text-sage-400">
               {t('intensityLabel')} {event.urge.intensity}/5
               {heldFor !== undefined && heldFor > 0 && (
                 <> · {t('heldFor', { duration: formatHeldDuration(heldFor) })}</>
@@ -460,7 +460,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             </div>
           )}
           {isUrge && event.urge.intensity === undefined && heldFor !== undefined && heldFor > 0 && (
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-1 text-xs text-sage-500 dark:text-sage-400">
               {t('heldFor', { duration: formatHeldDuration(heldFor) })}
             </div>
           )}
@@ -468,13 +468,13 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
           <TriggerTagList tags={triggers} className="mt-1.5" />
 
           {precededBy && (
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words whitespace-pre-wrap">
-              <span className="text-gray-400 dark:text-gray-500">{t('whatPrecededIt')} </span>
+            <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words whitespace-pre-wrap">
+              <span className="text-sage-400 dark:text-sage-500">{t('whatPrecededIt')} </span>
               {precededBy}
             </div>
           )}
           {text && (
-            <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words whitespace-pre-wrap">
+            <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words whitespace-pre-wrap">
               {text}
             </div>
           )}
@@ -496,18 +496,17 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md hover:shadow-lg 
-                    transition-all duration-300 border border-gray-200 dark:border-gray-700">
+      <div className="card p-5 hover:shadow-card-hover transition-shadow duration-300">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 flex items-center justify-center text-2xl 
-                          bg-blue-50 dark:bg-blue-900/30 rounded-xl 
-                          text-blue-600 dark:text-blue-400">
+                          bg-brand-50 dark:bg-brand-500/15 rounded-2xl 
+                          text-brand-600 dark:text-brand-300">
               {addiction.icon}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-sage-900 dark:text-white">
                   {addiction.name}
                 </h3>
                 {milestone.latest && (
@@ -517,9 +516,9 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+              <div className="text-sm text-sage-500 dark:text-sage-400 space-y-1">
                 <p>Last engaged: {new Date(addiction.lastEngaged).toLocaleDateString()}</p>
-                <p className="font-medium text-blue-600 dark:text-blue-400">
+                <p className="font-medium text-brand-600 dark:text-brand-400">
                   {formatElapsed(timeSince.days, timeSince.hours, timeSince.minutes, timeSince.seconds)} ago
                 </p>
               </div>
@@ -531,8 +530,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
-                       p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
+              className="text-sage-400 hover:text-sage-600 dark:hover:text-sage-300 
+                       p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-sage-700 
                        transition-colors"
               aria-label="More options"
             >
@@ -540,16 +539,16 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             </button>
             
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 
-                            rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-sage-800 
+                            rounded-lg shadow-lg border border-sage-200 dark:border-sage-700 
                             py-1 z-10">
                 <button
                   onClick={() => {
                     openUrgeDialog();
                     setIsMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
-                           hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
+                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
                 >
                   <ShieldCheck size={16} />
                   {t('logUrgeManually')}
@@ -559,16 +558,16 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                     openHistoryDialog();
                     setIsMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
-                           hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
+                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
                 >
                   <Calendar size={16} />
                   {t('viewHistory')}
                 </button>
                 <button
                   onClick={handleExportData}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
-                           hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
+                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
                 >
                   <Download size={16} />
                   {t('exportData')}
@@ -578,8 +577,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                     onEdit(addiction);
                     setIsMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 
-                           hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
+                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
                 >
                   <Edit size={16} />
                   {t('edit')}
@@ -610,50 +609,50 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
         )}
 
         <div className="grid grid-cols-4 max-[640px]:grid-cols-2 gap-3 mb-4">
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+          <div className="bg-sage-50 dark:bg-sage-700/50 rounded-xl p-3">
+            <div className="text-sm text-sage-500 dark:text-sage-400 mb-1">
               {t('costPerTime')}
             </div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="text-lg font-semibold text-sage-900 dark:text-white">
               {getCostLabel()}
             </div>
           </div>
           
-          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
-            <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">
+          <div className="bg-brand-50 dark:bg-brand-900/30 rounded-xl p-3">
+            <div className="text-sm text-brand-600 dark:text-brand-400 mb-1">
               {t('cleanFor')}
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+              <span className="text-lg font-semibold text-brand-700 dark:text-brand-300">
                 {daysSince}
               </span>
-              <span className="text-blue-600 dark:text-blue-400">
+              <span className="text-brand-600 dark:text-brand-400">
                 {t('days')}
               </span>
             </div>
           </div>
 
-          <div className="bg-emerald-50 dark:bg-emerald-900/30 rounded-lg p-3">
-            <div className="text-sm text-emerald-600 dark:text-emerald-400 mb-1">
+          <div className="bg-brand-50 dark:bg-brand-900/30 rounded-xl p-3">
+            <div className="text-sm text-brand-600 dark:text-brand-400 mb-1">
               {t('resistedThisMonth')}
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
+              <span className="text-lg font-semibold text-brand-700 dark:text-brand-300">
                 {monthlyUrges.resisted}
               </span>
               {monthlyUrges.total > 0 && (
-                <span className="text-sm text-emerald-600 dark:text-emerald-400">
+                <span className="text-sm text-brand-600 dark:text-brand-400">
                   / {monthlyUrges.total}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
-            <div className="text-sm text-green-600 dark:text-green-400 mb-1">
+          <div className="bg-amber-50 dark:bg-amber-900/25 rounded-xl p-3">
+            <div className="text-sm text-amber-700 dark:text-amber-400 mb-1">
               {t('goal')}
             </div>
-            <div className="text-lg font-semibold text-green-700 dark:text-green-300">
+            <div className="text-lg font-semibold text-amber-800 dark:text-amber-300">
               {getGoalLabel()}
             </div>
           </div>
@@ -661,14 +660,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
         {milestone.next && milestone.msUntilNext !== undefined && (
           <div className="mb-4">
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <div className="flex items-center justify-between text-xs text-sage-500 dark:text-sage-400 mb-1">
               <span className="flex items-center gap-1">
                 <Flame size={13} className="text-amber-500" />
                 {t('nextMilestone')}: {milestone.next.emoji} {t(milestone.next.labelKey)}
               </span>
               <span>{t('milestoneIn', { time: formatCountdown(milestone.msUntilNext) })}</span>
             </div>
-            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-sage-100 dark:bg-sage-700 overflow-hidden">
               <div
                 className="h-full rounded-full bg-amber-400 dark:bg-amber-500 transition-all duration-500"
                 style={{ width: `${Math.round(milestone.progressToNext * 100)}%` }}
@@ -679,21 +678,21 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
         <button
           onClick={() => onOpenPanic(addiction)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 rounded-xl
-                   text-base font-semibold text-white
-                   bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500
+          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 mb-4 rounded-xl
+                   text-base font-semibold text-white shadow-card
+                   bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500
                    transition-colors"
         >
           <Zap size={18} />
           {t('cravingNow')}
         </button>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-4 border-t border-sage-100 dark:border-sage-700">
           <div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            <div className="text-sm text-sage-500 dark:text-sage-400 mb-1">
               {t('totalSaved')}
             </div>
-            <div className="text-xl font-semibold text-green-600 dark:text-green-400">
+            <div className="text-xl font-semibold text-brand-700 dark:text-brand-300">
               {getSavedLabel(addiction)}
             </div>
           </div>
@@ -705,9 +704,10 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             
             <button
               onClick={openResetDialog}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                       bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
-                       hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
+                       bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300
+                       border border-rose-100 dark:border-rose-900/50
+                       hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
             >
               <RefreshCw size={16} />
               <span>{t('reset')}</span>
@@ -718,14 +718,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
       {showUrgeDialog && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
+          <div className="bg-white dark:bg-sage-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-semibold text-sage-900 dark:text-white">
                 {t('logUrgeManually')}
               </h2>
               <button
                 onClick={() => setShowUrgeDialog(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -734,7 +734,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                     {t('lastEngagedDate')}
                   </label>
                   <input
@@ -742,22 +742,22 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                     value={urgeDate}
                     onChange={(e) => setUrgeDate(e.target.value)}
                     max={toDateInputValue(new Date())}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                              focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                     {t('time')}
                   </label>
                   <input
                     type="time"
                     value={urgeTime}
                     onChange={(e) => setUrgeTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                              focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                 </div>
               </div>
@@ -767,16 +767,16 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               <TriggerTagPicker value={urgeTriggers} onChange={setUrgeTriggers} hint={t('triggersHint')} />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                   {t('noteOptional')}
                 </label>
                 <textarea
                   value={urgeNote}
                   onChange={(e) => setUrgeNote(e.target.value)}
                   placeholder={t('urgeNotePlaceholder')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500
                             resize-none h-20"
                 />
               </div>
@@ -784,16 +784,16 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setShowUrgeDialog(false)}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 
-                            rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
+                  className="px-4 py-2.5 border border-sage-200 dark:border-sage-600 text-sage-700 dark:text-sage-200 
+                            rounded-xl hover:bg-sage-100 dark:hover:bg-sage-700 
                             transition-colors duration-200"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   onClick={handleUrgeConfirm}
-                  className="px-4 py-2 bg-emerald-500 dark:bg-emerald-600 text-white 
-                            rounded-lg hover:bg-emerald-600 dark:hover:bg-emerald-500 
+                  className="px-5 py-2.5 bg-brand-700 dark:bg-brand-600 text-white font-semibold 
+                            rounded-xl hover:bg-brand-800 dark:hover:bg-brand-500 
                             transition-colors duration-200"
                 >
                   {t('save')}
@@ -806,14 +806,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
       {showResetDialog && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
+          <div className="bg-white dark:bg-sage-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-semibold text-sage-900 dark:text-white">
                 {t('recordRelapse')}
               </h2>
               <button 
                 onClick={() => setShowResetDialog(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -822,7 +822,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                     {t('lastEngagedDate')}
                   </label>
                   <input
@@ -830,22 +830,22 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                     value={resetDate}
                     onChange={(e) => setResetDate(e.target.value)}
                     max={toDateInputValue(new Date())}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                              focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                     {t('time')}
                   </label>
                   <input
                     type="time"
                     value={resetTime}
                     onChange={(e) => setResetTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                              focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                 </div>
               </div>
@@ -853,31 +853,31 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               <TriggerTagPicker value={resetTriggers} onChange={setResetTriggers} hint={t('triggersHint')} />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                   {t('whatPrecededIt')}
                 </label>
                 <textarea
                   value={resetPrecededBy}
                   onChange={(e) => setResetPrecededBy(e.target.value)}
                   placeholder={t('precededByPlaceholder')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500
                             resize-none h-20"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                   {t('whatHappened')}
                 </label>
                 <textarea
                   value={resetNote}
                   onChange={(e) => setResetNote(e.target.value)}
                   placeholder={t('relapsePrompt')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500
                             resize-none h-20"
                 />
               </div>
@@ -885,16 +885,16 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setShowResetDialog(false)}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 
-                            rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 
+                  className="px-4 py-2.5 border border-sage-200 dark:border-sage-600 text-sage-700 dark:text-sage-200 
+                            rounded-xl hover:bg-sage-100 dark:hover:bg-sage-700 
                             transition-colors duration-200"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   onClick={handleResetConfirm}
-                  className="px-4 py-2 bg-red-500 dark:bg-red-600 text-white 
-                            rounded-lg hover:bg-red-600 dark:hover:bg-red-500 
+                  className="px-5 py-2.5 bg-rose-600 dark:bg-rose-600 text-white font-semibold 
+                            rounded-xl hover:bg-rose-700 dark:hover:bg-rose-500 
                             transition-colors duration-200"
                 >
                   {t('confirmReset')}
@@ -907,14 +907,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
       {showHistoryDialog && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
+          <div className="bg-white dark:bg-sage-800 rounded-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-semibold text-sage-900 dark:text-white">
                 {t('historyTitle')}
               </h2>
               <button 
                 onClick={() => setShowHistoryDialog(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -924,26 +924,26 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={() => changeMonth(-1)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  className="p-2 hover:bg-sage-100 dark:hover:bg-sage-700 rounded-lg"
                   aria-label={t('previousMonth')}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                <h3 className="text-lg font-medium text-sage-900 dark:text-white">
                   {currentMonth.toLocaleString(locale, { month: 'long', year: 'numeric' })}
                 </h3>
                 <button
                   onClick={() => changeMonth(1)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                  className="p-2 hover:bg-sage-100 dark:hover:bg-sage-700 rounded-lg"
                   aria-label={t('nextMonth')}
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="flex items-center justify-center gap-4 mb-3 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center justify-center gap-4 mb-3 text-xs text-sage-500 dark:text-sage-400">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                  <span className="w-2 h-2 rounded-full bg-brand-500 dark:bg-brand-400" />
                   {t('legendResisted')}
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -954,7 +954,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {weekdayLabels.map(label => (
-                  <div key={label} className="text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div key={label} className="text-center text-xs sm:text-sm font-medium text-sage-500 dark:text-sage-400">
                     {label}
                   </div>
                 ))}
@@ -976,8 +976,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                   const background = relapseCount > 0
                     ? 'bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50'
                     : urgeCount > 0
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
-                      : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700';
+                      ? 'bg-brand-100 dark:bg-brand-900/30 hover:bg-brand-200 dark:hover:bg-brand-900/50'
+                      : 'bg-sage-50 dark:bg-sage-700/50 hover:bg-sage-100 dark:hover:bg-sage-700';
 
                   return (
                     <button
@@ -987,14 +987,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                       aria-pressed={isSelected}
                       aria-label={`${day} - ${urgeCount} ${t('urgesResisted')}, ${relapseCount} ${t('relapses')}`}
                       className={`aspect-square rounded-lg flex flex-col items-center justify-center gap-1 
-                                transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${background} ${
-                        isSelected ? 'ring-2 ring-blue-500' : ''
+                                transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${background} ${
+                        isSelected ? 'ring-2 ring-brand-500' : ''
                       }`}
                     >
                       <span className={`text-sm leading-none ${
                         isToday(day)
-                          ? 'font-bold text-blue-600 dark:text-blue-400'
-                          : 'font-medium text-gray-700 dark:text-gray-300'
+                          ? 'font-bold text-brand-600 dark:text-brand-400'
+                          : 'font-medium text-sage-700 dark:text-sage-300'
                       }`}>
                         {day}
                       </span>
@@ -1002,12 +1002,12 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                         <span className="flex items-center gap-0.5">
                           {urgeCount > 0 && (
                             urgeCount > 1 ? (
-                              <span className="min-w-[1.05rem] px-1 rounded-full bg-emerald-500 dark:bg-emerald-600 
+                              <span className="min-w-[1.05rem] px-1 rounded-full bg-brand-500 dark:bg-brand-600 
                                              text-[0.625rem] leading-4 font-semibold text-white">
                                 {urgeCount}
                               </span>
                             ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-brand-500 dark:bg-brand-400" />
                             )
                           )}
                           {relapseCount > 0 && (
@@ -1028,18 +1028,18 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               </div>
             </div>
 
-            <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="mb-6 rounded-xl border border-sage-200 dark:border-sage-700 p-4">
               {selectedDay === null ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-sage-500 dark:text-sage-400">
                   {t('selectDayHintEvents')}
                 </p>
               ) : (
                 <>
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 first-letter:uppercase">
+                  <h4 className="text-sm font-medium text-sage-900 dark:text-white mb-3 first-letter:uppercase">
                     {selectedDayLabel}
                   </h4>
                   {selectedDayEvents.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-sage-500 dark:text-sage-400">
                       {t('noEventsOnDay')}
                     </p>
                   ) : (
@@ -1051,12 +1051,12 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               )}
             </div>
 
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="border-t border-sage-200 dark:border-sage-700 pt-4">
+              <h4 className="text-sm font-medium text-sage-700 dark:text-sage-300 mb-2">
                 {t('recentActivity')}
               </h4>
               {timelineNewestFirst.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-sage-500 dark:text-sage-400">
                   {t('noActivityRecorded')}
                 </p>
               ) : (
