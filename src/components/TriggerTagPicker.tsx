@@ -11,6 +11,8 @@ interface TriggerTagPickerProps {
   variant?: 'default' | 'onDark';
   label?: string;
   hint?: string;
+  // Set when the surrounding form requires a tag and none has been picked yet.
+  error?: string;
 }
 
 const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
@@ -18,7 +20,8 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
   onChange,
   variant = 'default',
   label,
-  hint
+  hint,
+  error
 }) => {
   const { t } = useI18n();
 
@@ -66,6 +69,11 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
           );
         })}
       </div>
+      {error && (
+        <p className={`mt-1.5 text-xs font-medium ${onDark ? 'text-rose-200' : 'text-rose-600 dark:text-rose-400'}`}>
+          {error}
+        </p>
+      )}
     </div>
   );
 };

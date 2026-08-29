@@ -282,7 +282,7 @@ const AppContent = () => {
       secondsHeld: payload.secondsHeld,
       source: 'panic',
       relapse: outcome === 'relapsed'
-        ? { text: payload.text, precededBy: payload.precededBy }
+        ? { text: payload.text, precededBy: payload.precededBy, location: payload.location }
         : undefined
     });
 

@@ -27,6 +27,7 @@ export interface ExportDataRow {
   eventIntensity: string;
   eventHeldSeconds: string;
   eventPrecededBy: string;
+  eventLocation: string;
   eventNote: string;
 }
 
@@ -136,6 +137,7 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
           eventIntensity: urge.intensity !== undefined ? String(urge.intensity) : '',
           eventHeldSeconds: urge.secondsHeld !== undefined ? String(urge.secondsHeld) : '',
           eventPrecededBy: '',
+          eventLocation: '',
           eventNote: urge.text || ''
         }
       });
@@ -155,6 +157,7 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
           eventIntensity: '',
           eventHeldSeconds: '',
           eventPrecededBy: note.precededBy || '',
+          eventLocation: note.location || '',
           eventNote: note.text || ''
         }
       });
@@ -170,6 +173,7 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
         eventIntensity: '',
         eventHeldSeconds: '',
         eventPrecededBy: '',
+        eventLocation: '',
         eventNote: ''
       });
       return;
@@ -208,6 +212,7 @@ const HEADERS = [
   'Intensity (1-5)',
   'Held (seconds)',
   'Preceded By',
+  'Location',
   'Event Note'
 ];
 
@@ -236,6 +241,7 @@ const toCells = (row: ExportDataRow): string[] => [
   row.eventIntensity,
   row.eventHeldSeconds,
   row.eventPrecededBy,
+  row.eventLocation,
   row.eventNote
 ];
 

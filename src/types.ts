@@ -27,6 +27,10 @@ export interface RelapseEntry {
   text?: string;
   // Debrief: what was going on just before the slip.
   precededBy?: string;
+  // Debrief: where the slip happened. Optional on the type because entries
+  // recorded before this field existed simply do not carry one; the relapse
+  // form itself requires it for everything logged from now on.
+  location?: string;
   triggers?: TriggerTag[];
   // Set when the slip was logged from a craving that was tracked as an urge,
   // so the two entries can be kept in step when either one is deleted.

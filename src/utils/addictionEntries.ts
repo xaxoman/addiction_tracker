@@ -10,6 +10,7 @@ import { createRelapseId, createUrgeId } from './dataValidation';
 export interface RelapseDetails {
   text?: string;
   precededBy?: string;
+  location?: string;
   triggers?: TriggerTag[];
 }
 
@@ -39,6 +40,7 @@ export const appendRelapse = (
     date,
     text: details?.text,
     precededBy: details?.precededBy,
+    location: details?.location,
     triggers: details?.triggers,
     previousLastEngaged: new Date(addiction.lastEngaged),
     ...extra
@@ -115,6 +117,7 @@ export const addUrge = (addiction: Addiction, input: UrgeInput): Addiction => {
     {
       text: input.relapse?.text ?? input.text,
       precededBy: input.relapse?.precededBy,
+      location: input.relapse?.location,
       triggers: input.relapse?.triggers ?? input.triggers
     },
     { urgeId: urge.id }

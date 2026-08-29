@@ -264,7 +264,13 @@ const en: Dictionary = {
   // --- Relapse debrief ----------------------------------------------------
   whatHappened: 'What happened?',
   whatPrecededIt: 'What came just before it?',
-  precededByPlaceholder: 'Where were you, who with, how were you feeling?',
+  precededByPlaceholder: 'Who were you with, how were you feeling?',
+  whereDidItHappen: 'Where did it happen?',
+  locationPlaceholder: 'Home, work, the car, a bar, a friend\'s place...',
+  relapseFieldsRequired: 'Every field is required. Fill in what is missing to record this relapse.',
+  fieldRequired: 'This field is required.',
+  triggersRequired: 'Pick at least one trigger.',
+  intensityRequired: 'Pick how strong it was.',
 
   // --- History ------------------------------------------------------------
   historyTitle: 'History',
@@ -594,7 +600,13 @@ const it: Dictionary = {
   // --- Relapse debrief ----------------------------------------------------
   whatHappened: 'Cosa e successo?',
   whatPrecededIt: 'Cosa e successo poco prima?',
-  precededByPlaceholder: 'Dove eri, con chi, come ti sentivi?',
+  precededByPlaceholder: 'Con chi eri, come ti sentivi?',
+  whereDidItHappen: 'Dove e successo?',
+  locationPlaceholder: 'Casa, lavoro, in auto, un bar, da un amico...',
+  relapseFieldsRequired: 'Tutti i campi sono obbligatori. Completa quelli mancanti per registrare la ricaduta.',
+  fieldRequired: 'Questo campo e obbligatorio.',
+  triggersRequired: 'Scegli almeno un fattore scatenante.',
+  intensityRequired: 'Indica quanto era forte.',
 
   // --- History ------------------------------------------------------------
   historyTitle: 'Storico',

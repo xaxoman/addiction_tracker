@@ -111,6 +111,7 @@ const sanitizeRelapseEntry = (value: unknown): RelapseEntry => {
     date: validateDate(note.date),
     text: validateString(note.text),
     precededBy: validateOptionalString(note.precededBy),
+    location: validateOptionalString(note.location),
     triggers: validateTriggerTags(note.triggers),
     urgeId: validateOptionalString(note.urgeId),
     previousLastEngaged: validateOptionalDate(note.previousLastEngaged)

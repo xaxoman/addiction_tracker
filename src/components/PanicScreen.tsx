@@ -16,6 +16,7 @@ export interface UrgeOutcomePayload {
   triggers: TriggerTag[];
   text?: string;
   precededBy?: string;
+  location?: string;
   secondsHeld: number;
 }
 
@@ -45,6 +46,10 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
   const [triggers, setTriggers] = useState<TriggerTag[]>([]);
   const [note, setNote] = useState('');
   const [precededBy, setPrecededBy] = useState('');
+  const [location, setLocation] = useState('');
+  // The relapse debrief is fully required, but nothing is flagged until the
+  // first attempt to save it.
+  const [showRelapseErrors, setShowRelapseErrors] = useState(false);
 
   // Wall-clock based, so a backgrounded phone or a throttled tab still shows
   // the real time held rather than however many ticks the timer managed.
@@ -82,12 +87,49 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
     triggers,
     text: note.trim() || undefined,
     precededBy: precededBy.trim() || undefined,
+    location: location.trim() || undefined,
     secondsHeld: Math.floor((Date.now() - startedAtRef.current) / 1000)
   });
 
-  const renderIntensityPicker = () => (
+  // Only the relapse step is gated: the resisted exit stays one tap away, since
+  // blocking a win behind a form is how a win goes unlogged.
+  const relapseErrors = {
+    intensity: intensity === undefined,
+    triggers: triggers.length === 0,
+    precededBy: precededBy.trim().length === 0,
+    location: location.trim().length === 0,
+    note: note.trim().length === 0
+  };
+  const isRelapseIncomplete = Object.values(relapseErrors).some(Boolean);
+
+  const handleRelapseConfirm = () => {
+    if (isRelapseIncomplete) {
+      setShowRelapseErrors(true);
+      return;
+    }
+    onRelapsed(buildPayload());
+  };
+
+  const relapseFieldClass = (hasError: boolean, extra: string = ''): string => `
+    w-full rounded-xl bg-white/10 border px-3 py-2 text-white placeholder:text-white/40
+    focus:ring-2 ${extra} ${
+      showRelapseErrors && hasError
+        ? 'border-rose-300 focus:ring-rose-300 focus:border-rose-300'
+        : 'border-white/20 focus:ring-rose-400 focus:border-rose-400'
+    }`;
+
+  const renderRelapseFieldError = (hasError: boolean) => (
+    showRelapseErrors && hasError
+      ? <p className="mt-1 text-xs font-medium text-rose-200">{t('fieldRequired')}</p>
+      : null
+  );
+
+  const renderIntensityPicker = (required: boolean = false) => (
     <div>
-      <label className="block text-sm font-medium text-white/80 mb-2">{t('howStrongWasIt')}</label>
+      <label className="block text-sm font-medium text-white/80 mb-2">
+        {t('howStrongWasIt')}
+        {required && <span className="text-rose-300" aria-hidden="true"> *</span>}
+      </label>
       <div className="flex gap-2">
         {[1, 2, 3, 4, 5].map(level => (
           <button
@@ -109,6 +151,9 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
         <span>{t('intensityMild')}</span>
         <span>{t('intensityIntense')}</span>
       </div>
+      {required && showRelapseErrors && relapseErrors.intensity && (
+        <p className="mt-1 text-xs font-medium text-rose-200">{t('intensityRequired')}</p>
+      )}
     </div>
   );
 
@@ -325,38 +370,73 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               <p className="mt-1 text-sm text-white/60">{t('panicNoteStep')}</p>
             </div>
 
-            {renderIntensityPicker()}
+            {renderIntensityPicker(true)}
 
-            <TriggerTagPicker value={triggers} onChange={setTriggers} variant="onDark" hint={t('triggersHint')} />
+            <TriggerTagPicker
+              value={triggers}
+              onChange={setTriggers}
+              variant="onDark"
+              label={`${t('triggers')} *`}
+              hint={t('triggersHint')}
+              error={showRelapseErrors && relapseErrors.triggers ? t('triggersRequired') : undefined}
+            />
 
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">{t('whatPrecededIt')}</label>
+              <label className="block text-sm font-medium text-white/80 mb-1">
+                {t('whatPrecededIt')}<span className="text-rose-300" aria-hidden="true"> *</span>
+              </label>
               <textarea
+                required
                 value={precededBy}
                 onChange={event => setPrecededBy(event.target.value)}
                 placeholder={t('precededByPlaceholder')}
-                className="w-full rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-white
-                         placeholder:text-white/40 focus:ring-2 focus:ring-rose-400 focus:border-rose-400
-                         resize-none h-20"
+                aria-invalid={showRelapseErrors && relapseErrors.precededBy}
+                className={relapseFieldClass(relapseErrors.precededBy, 'resize-none h-20')}
               />
+              {renderRelapseFieldError(relapseErrors.precededBy)}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">{t('whatHappened')}</label>
+              <label className="block text-sm font-medium text-white/80 mb-1">
+                {t('whereDidItHappen')}<span className="text-rose-300" aria-hidden="true"> *</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={location}
+                onChange={event => setLocation(event.target.value)}
+                placeholder={t('locationPlaceholder')}
+                aria-invalid={showRelapseErrors && relapseErrors.location}
+                className={relapseFieldClass(relapseErrors.location)}
+              />
+              {renderRelapseFieldError(relapseErrors.location)}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-1">
+                {t('whatHappened')}<span className="text-rose-300" aria-hidden="true"> *</span>
+              </label>
               <textarea
+                required
                 value={note}
                 onChange={event => setNote(event.target.value)}
                 placeholder={t('relapsePrompt')}
-                className="w-full rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-white
-                         placeholder:text-white/40 focus:ring-2 focus:ring-rose-400 focus:border-rose-400
-                         resize-none h-20"
+                aria-invalid={showRelapseErrors && relapseErrors.note}
+                className={relapseFieldClass(relapseErrors.note, 'resize-none h-20')}
               />
+              {renderRelapseFieldError(relapseErrors.note)}
             </div>
+
+            {showRelapseErrors && isRelapseIncomplete && (
+              <p role="alert" className="text-sm font-medium text-rose-200">
+                {t('relapseFieldsRequired')}
+              </p>
+            )}
 
             <div className="mt-auto pt-2 space-y-3">
               <button
                 type="button"
-                onClick={() => onRelapsed(buildPayload())}
+                onClick={handleRelapseConfirm}
                 className="w-full rounded-2xl bg-rose-500 px-4 py-4 text-lg font-semibold hover:bg-rose-400 transition-colors"
               >
                 {t('confirmReset')}

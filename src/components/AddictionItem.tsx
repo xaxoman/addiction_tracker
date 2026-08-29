@@ -87,7 +87,11 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   const [resetTime, setResetTime] = useState(() => toTimeInputValue(new Date()));
   const [resetNote, setResetNote] = useState('');
   const [resetPrecededBy, setResetPrecededBy] = useState('');
+  const [resetLocation, setResetLocation] = useState('');
   const [resetTriggers, setResetTriggers] = useState<TriggerTag[]>([]);
+  // Errors stay hidden until the first save attempt, so an untouched form does
+  // not open covered in red.
+  const [showResetErrors, setShowResetErrors] = useState(false);
   const [urgeDate, setUrgeDate] = useState(() => toDateInputValue(new Date()));
   const [urgeTime, setUrgeTime] = useState(() => toTimeInputValue(new Date()));
   const [urgeNote, setUrgeNote] = useState('');
@@ -104,7 +108,9 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     setResetTime(toTimeInputValue(now));
     setResetNote('');
     setResetPrecededBy('');
+    setResetLocation('');
     setResetTriggers([]);
+    setShowResetErrors(false);
     setShowResetDialog(true);
   };
 
@@ -167,15 +173,34 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     return isNaN(combined.getTime()) ? null : combined;
   };
 
+  // Every field on the relapse form is required: a slip logged with only a
+  // timestamp tells the user nothing later, and the debrief is the part that
+  // turns the history into something readable.
+  const resetErrors = {
+    date: resetDate.trim().length === 0,
+    time: resetTime.trim().length === 0,
+    triggers: resetTriggers.length === 0,
+    precededBy: resetPrecededBy.trim().length === 0,
+    location: resetLocation.trim().length === 0,
+    note: resetNote.trim().length === 0
+  };
+  const isResetIncomplete = Object.values(resetErrors).some(Boolean);
+
   const handleResetConfirm = () => {
+    if (isResetIncomplete) {
+      setShowResetErrors(true);
+      return;
+    }
     const resetDateTime = combineDateAndTime(resetDate, resetTime);
     if (!resetDateTime) {
+      setShowResetErrors(true);
       return; // Guard against incomplete/invalid input
     }
     onReset(addiction.id, resetDateTime, {
-      text: resetNote.trim() || undefined,
-      precededBy: resetPrecededBy.trim() || undefined,
-      triggers: resetTriggers.length > 0 ? resetTriggers : undefined
+      text: resetNote.trim(),
+      precededBy: resetPrecededBy.trim(),
+      location: resetLocation.trim(),
+      triggers: resetTriggers
     });
     setShowResetDialog(false);
   };
@@ -421,12 +446,37 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     </div>
   );
 
+  // Shared field styling for the relapse form: every input switches to a rose
+  // outline once it has been left empty and a save has been attempted.
+  const resetFieldClass = (hasError: boolean, extra: string = ''): string => `
+    w-full px-3 py-2 border rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white
+    focus:ring-2 ${extra} ${
+      showResetErrors && hasError
+        ? 'border-rose-400 dark:border-rose-500 focus:ring-rose-500 focus:border-rose-500'
+        : 'border-sage-200 dark:border-sage-600 focus:ring-brand-500 focus:border-brand-500'
+    }`;
+
+  // The asterisk is decorative; `required` on the control is what assistive
+  // technology actually announces.
+  const renderRequiredLabel = (label: string) => (
+    <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
+      {label} <span className="text-rose-500" aria-hidden="true">*</span>
+    </label>
+  );
+
+  const renderResetFieldError = (hasError: boolean) => (
+    showResetErrors && hasError
+      ? <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{t('fieldRequired')}</p>
+      : null
+  );
+
   // One timeline row, shared by the selected-day panel and the recent list.
   const renderTimelineRow = (event: TimelineEvent, showDate: boolean) => {
     const isUrge = event.kind === 'urge';
     const triggers = isUrge ? event.urge.triggers : event.relapse.triggers;
     const text = isUrge ? event.urge.text : event.relapse.text;
     const precededBy = isUrge ? undefined : event.relapse.precededBy;
+    const location = isUrge ? undefined : event.relapse.location;
     const heldFor = isUrge ? event.urge.secondsHeld : undefined;
 
     return (
@@ -471,6 +521,12 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words whitespace-pre-wrap">
               <span className="text-sage-400 dark:text-sage-500">{t('whatPrecededIt')} </span>
               {precededBy}
+            </div>
+          )}
+          {location && (
+            <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words whitespace-pre-wrap">
+              <span className="text-sage-400 dark:text-sage-500">{t('whereDidItHappen')} </span>
+              {location}
             </div>
           )}
           {text && (
@@ -822,65 +878,85 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                    {t('lastEngagedDate')}
-                  </label>
+                  {renderRequiredLabel(t('lastEngagedDate'))}
                   <input
                     type="date"
+                    required
                     value={resetDate}
                     onChange={(e) => setResetDate(e.target.value)}
                     max={toDateInputValue(new Date())}
-                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
-                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
-                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                    aria-invalid={showResetErrors && resetErrors.date}
+                    className={resetFieldClass(resetErrors.date)}
                   />
+                  {renderResetFieldError(resetErrors.date)}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                    {t('time')}
-                  </label>
+                  {renderRequiredLabel(t('time'))}
                   <input
                     type="time"
+                    required
                     value={resetTime}
                     onChange={(e) => setResetTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
-                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
-                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                    aria-invalid={showResetErrors && resetErrors.time}
+                    className={resetFieldClass(resetErrors.time)}
                   />
+                  {renderResetFieldError(resetErrors.time)}
                 </div>
               </div>
 
-              <TriggerTagPicker value={resetTriggers} onChange={setResetTriggers} hint={t('triggersHint')} />
+              <TriggerTagPicker
+                value={resetTriggers}
+                onChange={setResetTriggers}
+                label={`${t('triggers')} *`}
+                hint={t('triggersHint')}
+                error={showResetErrors && resetErrors.triggers ? t('triggersRequired') : undefined}
+              />
 
               <div>
-                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                  {t('whatPrecededIt')}
-                </label>
+                {renderRequiredLabel(t('whatPrecededIt'))}
                 <textarea
+                  required
                   value={resetPrecededBy}
                   onChange={(e) => setResetPrecededBy(e.target.value)}
                   placeholder={t('precededByPlaceholder')}
-                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
-                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
-                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500
-                            resize-none h-20"
+                  aria-invalid={showResetErrors && resetErrors.precededBy}
+                  className={resetFieldClass(resetErrors.precededBy, 'resize-none h-20')}
                 />
+                {renderResetFieldError(resetErrors.precededBy)}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                  {t('whatHappened')}
-                </label>
+                {renderRequiredLabel(t('whereDidItHappen'))}
+                <input
+                  type="text"
+                  required
+                  value={resetLocation}
+                  onChange={(e) => setResetLocation(e.target.value)}
+                  placeholder={t('locationPlaceholder')}
+                  aria-invalid={showResetErrors && resetErrors.location}
+                  className={resetFieldClass(resetErrors.location)}
+                />
+                {renderResetFieldError(resetErrors.location)}
+              </div>
+
+              <div>
+                {renderRequiredLabel(t('whatHappened'))}
                 <textarea
+                  required
                   value={resetNote}
                   onChange={(e) => setResetNote(e.target.value)}
                   placeholder={t('relapsePrompt')}
-                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
-                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
-                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500
-                            resize-none h-20"
+                  aria-invalid={showResetErrors && resetErrors.note}
+                  className={resetFieldClass(resetErrors.note, 'resize-none h-20')}
                 />
+                {renderResetFieldError(resetErrors.note)}
               </div>
+
+              {showResetErrors && isResetIncomplete && (
+                <p role="alert" className="text-sm font-medium text-rose-600 dark:text-rose-400">
+                  {t('relapseFieldsRequired')}
+                </p>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
