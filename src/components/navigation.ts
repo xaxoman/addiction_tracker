@@ -1,4 +1,4 @@
-export type AppTab = 'home' | 'trends';
+export type AppTab = 'home' | 'trends' | 'trackers';
 
 // Actions that live in the navigation next to the two real destinations: each
 // one opens a surface the app already has (craving screen, daily check-in,

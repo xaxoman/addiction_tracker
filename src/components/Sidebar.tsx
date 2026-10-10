@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  BarChart3, CalendarCheck, ChevronRight, Flame, Home, NotebookPen, Settings, Sprout, Wind, Zap
+  BarChart3, CalendarCheck, ChevronRight, Flame, Home, ListChecks, NotebookPen, Settings, Sprout, Wind, Zap
 } from 'lucide-react';
 import { AppTab, NavAction } from './navigation';
 import { LeafSprig } from './illustrations';
@@ -26,7 +26,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const destinations: Array<{ key: AppTab; icon: React.ReactNode; label: string }> = [
     { key: 'home', icon: <Home size={18} />, label: t('overview') },
-    { key: 'trends', icon: <BarChart3 size={18} />, label: t('progress') }
+    { key: 'trends', icon: <BarChart3 size={18} />, label: t('progress') },
+    { key: 'trackers', icon: <ListChecks size={18} />, label: t('trackersTab') }
   ];
 
   const tools: Array<{ key: NavAction; icon: React.ReactNode; label: string }> = [

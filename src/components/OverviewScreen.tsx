@@ -1,18 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { Plus, Zap } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus, Wind, Zap } from 'lucide-react';
 import { Addiction, DailyCheckIn, DailyIntention, FollowThrough, WeeklyReview } from '../types';
-import { RelapseDetails, UrgeInput } from '../context/AddictionContext';
+import { RelapseDetails } from '../context/AddictionContext';
 import { CheckInInput, IntentionInput } from '../context/CheckInContext';
 import { PlanTarget, RiskNudge } from '../services/checkInNotifications';
 import HeroStreakCard from './HeroStreakCard';
-import MilestoneCard from './MilestoneCard';
-import ProgressChartCard from './ProgressChartCard';
-import UrgeLogCard from './UrgeLogCard';
-import ToolsAndSupport from './ToolsAndSupport';
-import DailyCheckInCard from './DailyCheckInCard';
-import DraggableAddictionList from './DraggableAddictionList';
-import WeeklyFocusCard from './WeeklyFocusCard';
+import TodayCard from './TodayCard';
 import RiskMomentBanner from './RiskMomentBanner';
+import RelapseDialog from './RelapseDialog';
 import { getStreakStats } from '../utils/streaks';
 import { useI18n } from '../i18n/useI18n';
 
@@ -37,12 +32,6 @@ interface OverviewScreenProps {
   onOpenBreathing: () => void;
   onAdd: () => void;
   onReset: (id: string, date: Date, details?: RelapseDetails) => void;
-  onDeleteRelapse: (id: string, relapseId: string) => void;
-  onLogUrge: (id: string, input: UrgeInput) => void;
-  onDeleteUrge: (id: string, urgeId: string) => void;
-  onReorder: (startIndex: number, endIndex: number) => void;
-  onEdit: (addiction: Addiction) => void;
-  onDelete: (id: string) => void;
 }
 
 const getGreetingKey = (hour: number): string => {
@@ -51,8 +40,9 @@ const getGreetingKey = (hour: number): string => {
   return 'goodEvening';
 };
 
-// Home is about what to do now: the risky moment if one is coming, this week's
-// focus, today's intention. Totals and quotes live on the Progress tab.
+// Home answers one question: what do I do now? Where you stand, one button for
+// a craving, and today's short list. Stats live on Progress, habit management
+// on Trackers.
 const OverviewScreen: React.FC<OverviewScreenProps> = ({
   addictions,
   focusAddiction,
@@ -71,45 +61,27 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
   onOpenPanic,
   onOpenBreathing,
   onAdd,
-  onReset,
-  onDeleteRelapse,
-  onLogUrge,
-  onDeleteUrge,
-  onReorder,
-  onEdit,
-  onDelete
+  onReset
 }) => {
   const { t } = useI18n();
-  const journalRef = useRef<HTMLDivElement>(null);
+  const todayRef = useRef<HTMLDivElement>(null);
+  const [isRelapseOpen, setIsRelapseOpen] = useState(false);
 
   const streak = getStreakStats(focusAddiction);
 
-  // The nav's Journal entry scrolls the check-in card into view; the card
-  // itself opens its editor off the same signal.
+  // The nav's Journal entry scrolls the Today card into view; the card itself
+  // opens its check-in editor off the same signal.
   useEffect(() => {
     if (journalSignal > 0) {
-      journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [journalSignal]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-lg sm:text-2xl font-semibold text-sage-900 dark:text-white">
-          {t(getGreetingKey(new Date().getHours()))}, {t('youveGotThis')}
-        </h1>
-
-        <button
-          type="button"
-          onClick={() => onOpenPanic(focusAddiction)}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl shrink-0
-                   bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500
-                   text-white text-sm font-semibold shadow-card transition-colors"
-        >
-          <Zap size={17} />
-          {t('logUrge')}
-        </button>
-      </div>
+    <div className="space-y-4 max-w-xl mx-auto">
+      <h1 className="text-lg sm:text-xl font-semibold text-sage-900 dark:text-white">
+        {t(getGreetingKey(new Date().getHours()))}
+      </h1>
 
       {addictions.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0" role="tablist" aria-label={t('selectHabit')}>
@@ -133,78 +105,80 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={onAdd}
+            className="shrink-0 w-8 h-8 rounded-full border border-dashed border-sage-300 dark:border-sage-600 text-sage-500 dark:text-sage-400 flex items-center justify-center hover:bg-sage-100 dark:hover:bg-sage-700"
+            aria-label={t('addTracker')}
+            title={t('addTracker')}
+          >
+            <Plus size={16} />
+          </button>
         </div>
       )}
 
       <RiskMomentBanner nudges={riskNudges} onOpenPlan={onOpenPlan} />
 
-      <WeeklyFocusCard latestReview={latestReview} onStartReview={onStartReview} />
+      <HeroStreakCard addiction={focusAddiction} streak={streak} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-7">
-          <HeroStreakCard addiction={focusAddiction} streak={streak} />
-        </div>
-        <div className="lg:col-span-5">
-          <MilestoneCard addiction={focusAddiction} />
-        </div>
-
-        <div className="lg:col-span-12" ref={journalRef}>
-          <DailyCheckInCard
-            todaysCheckIn={todaysCheckIn}
-            onRecord={onRecordCheckIn}
-            todaysIntention={todaysIntention}
-            pendingIntention={pendingIntention}
-            focusAddiction={focusAddiction}
-            onSetIntention={onSetIntention}
-            onIntentionOutcome={onIntentionOutcome}
-            openSignal={journalSignal}
-          />
-        </div>
-
-        <div className="lg:col-span-8">
-          <ProgressChartCard addiction={focusAddiction} />
-        </div>
-        <div className="lg:col-span-4">
-          <UrgeLogCard addiction={focusAddiction} />
-        </div>
-
-        <div className="lg:col-span-12">
-          <ToolsAndSupport
-            onOpenUrgeTracker={() => onOpenPanic(focusAddiction)}
-            onOpenJournal={() => journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            onOpenBreathing={onOpenBreathing}
-            onOpenReview={onStartReview}
-          />
-        </div>
-      </div>
-
-      <section className="pt-2">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="text-lg font-semibold text-sage-900 dark:text-white">{t('yourTrackers')}</h2>
+      <div>
+        <div className="flex gap-2">
           <button
             type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium
-                     border border-sage-200 dark:border-sage-700 bg-white dark:bg-sage-800
-                     text-sage-700 dark:text-sage-200 hover:bg-sage-100 dark:hover:bg-sage-700 transition-colors"
+            onClick={() => onOpenPanic(focusAddiction)}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-4 rounded-2xl
+                     bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500
+                     text-white text-base font-semibold shadow-card transition-colors"
           >
-            <Plus size={16} />
-            {t('addTracker')}
+            <Zap size={19} />
+            {t('cravingNow')}
+          </button>
+          <button
+            type="button"
+            onClick={onOpenBreathing}
+            className="shrink-0 w-14 rounded-2xl border border-sage-200 dark:border-sage-700 bg-white dark:bg-sage-800
+                     text-brand-700 dark:text-brand-300 flex items-center justify-center
+                     hover:bg-sage-100 dark:hover:bg-sage-700 transition-colors"
+            aria-label={t('breathing')}
+            title={t('breathing')}
+          >
+            <Wind size={20} />
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsRelapseOpen(true)}
+          className="mt-2 w-full py-2 text-sm font-medium text-sage-500 hover:text-rose-600 dark:text-sage-400 dark:hover:text-rose-300 transition-colors"
+        >
+          {t('hadRelapseLink')}
+        </button>
+      </div>
 
-        <DraggableAddictionList
-          addictions={addictions}
-          onReset={onReset}
-          onDeleteRelapse={onDeleteRelapse}
-          onLogUrge={onLogUrge}
-          onDeleteUrge={onDeleteUrge}
-          onOpenPanic={onOpenPanic}
-          onReorder={onReorder}
-          onEdit={onEdit}
-          onDelete={onDelete}
+      <div ref={todayRef}>
+        <TodayCard
+          todaysCheckIn={todaysCheckIn}
+          onRecord={onRecordCheckIn}
+          todaysIntention={todaysIntention}
+          pendingIntention={pendingIntention}
+          focusAddiction={focusAddiction}
+          onSetIntention={onSetIntention}
+          onIntentionOutcome={onIntentionOutcome}
+          latestReview={latestReview}
+          onStartReview={onStartReview}
+          openSignal={journalSignal}
         />
-      </section>
+      </div>
+
+      {isRelapseOpen && (
+        <RelapseDialog
+          addiction={focusAddiction}
+          onClose={() => setIsRelapseOpen(false)}
+          onConfirm={(date, details) => {
+            onReset(focusAddiction.id, date, details);
+            setIsRelapseOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

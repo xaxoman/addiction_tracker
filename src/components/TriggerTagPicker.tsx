@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NEED_TAGS, NeedTag, TRIGGER_TAGS, TriggerTag } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { triggerLabelKey } from '../utils/triggers';
@@ -17,6 +17,11 @@ interface ChipPickerProps<T extends string> {
   hint?: string;
   // Set when the surrounding form requires a tag and none has been picked yet.
   error?: string;
+  // Show only this many options (most relevant first, plus anything already
+  // picked) behind a "more" toggle, so a long vocabulary is not a wall of chips.
+  collapsedCount?: number;
+  // Preferred display order, e.g. the user's most frequent tags first.
+  order?: readonly T[];
 }
 
 const ChipPicker = <T extends string>({
@@ -28,9 +33,20 @@ const ChipPicker = <T extends string>({
   size = 'md',
   label,
   hint,
-  error
+  error,
+  collapsedCount,
+  order
 }: ChipPickerProps<T>) => {
   const { t } = useI18n();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const ordered = order
+    ? [...order.filter(tag => options.includes(tag)), ...options.filter(tag => !order.includes(tag))]
+    : [...options];
+  const canCollapse = collapsedCount !== undefined && ordered.length > collapsedCount;
+  const visible = canCollapse && !isExpanded
+    ? ordered.filter((tag, index) => index < collapsedCount || value.includes(tag))
+    : ordered;
 
   const toggle = (tag: T) => {
     onChange(value.includes(tag) ? value.filter(item => item !== tag) : [...value, tag]);
@@ -53,7 +69,7 @@ const ChipPicker = <T extends string>({
         </p>
       )}
       <div className={`flex flex-wrap ${size === 'sm' ? 'gap-1.5' : 'gap-2'}`}>
-        {options.map(tag => {
+        {visible.map(tag => {
           const isSelected = value.includes(tag);
           return (
             <button
@@ -77,6 +93,17 @@ const ChipPicker = <T extends string>({
             </button>
           );
         })}
+        {canCollapse && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(expanded => !expanded)}
+            className={`rounded-full font-medium transition-colors underline-offset-2 hover:underline ${
+              size === 'sm' ? 'px-1.5 py-1 text-xs' : 'px-2 py-1.5 text-sm'
+            } ${onDark ? 'text-white/70' : 'text-brand-700 dark:text-brand-300'}`}
+          >
+            {isExpanded ? t('showFewer') : t('showMoreCount', { count: ordered.length - visible.length })}
+          </button>
+        )}
       </div>
       {error && (
         <p className={`mt-1.5 text-xs font-medium ${onDark ? 'text-rose-200' : 'text-rose-600 dark:text-rose-400'}`}>

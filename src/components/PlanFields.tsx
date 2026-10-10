@@ -96,10 +96,8 @@ export const NextTimePlanField: React.FC<NextTimePlanFieldProps> = ({
       <div>
         <label className={`block text-sm font-semibold mb-1 ${onDark ? 'text-white' : 'text-sage-900 dark:text-white'}`}>
           {t('nextTimeQuestion')}
-          <span className={onDark ? 'text-rose-300' : 'text-rose-500'} aria-hidden="true"> *</span>
         </label>
         <textarea
-          required
           value={value}
           onChange={event => onChange(event.target.value)}
           placeholder={t('nextTimePlaceholder')}

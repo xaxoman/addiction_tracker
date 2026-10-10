@@ -41,17 +41,3 @@ export const LeafSprig: React.FC<SceneProps> = ({ className = '' }) => (
     />
   </svg>
 );
-
-// The soft hill the quote card sits on.
-export const HillScene: React.FC<SceneProps> = ({ className = '' }) => (
-  <svg
-    className={className}
-    viewBox="0 0 240 120"
-    preserveAspectRatio="xMaxYMax slice"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path d="M0 120 Q70 62 150 82 Q206 96 240 74 L240 120Z" fill="currentColor" fillOpacity="0.5" />
-    <path d="M60 120 Q130 84 240 104 L240 120Z" fill="currentColor" fillOpacity="0.75" />
-  </svg>
-);
