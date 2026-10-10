@@ -90,3 +90,51 @@ export const getDaysCleanSeries = (
 
   return points;
 };
+
+export interface CleanDays {
+  clean: number;
+  // Days in the window that the tracker actually covers: at most `rangeDays`,
+  // fewer for a tracker younger than that.
+  total: number;
+}
+
+const startOfDay = (time: number): number => {
+  const date = new Date(time);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+};
+
+// Days in the last `rangeDays` (today included) with no use at all. Unlike the
+// streak this does not drop to zero after a slip: 29 good days and one bad one
+// still read as 29 out of 30, which is the truth.
+export const getCleanDays = (addiction: Addiction, rangeDays = 30, now: Date = new Date()): CleanDays => {
+  // Every streak anchor marks a day the habit happened: each relapse, the
+  // anchor each relapse replaced (the original "last engaged"), and the current one.
+  const useTimes = [
+    ...(addiction.notes ?? []).flatMap(note => [toTime(note.date), toTime(note.previousLastEngaged)]),
+    toTime(addiction.lastEngaged)
+  ].filter((time): time is number => time !== null && time <= now.getTime());
+
+  const useDays = new Set(useTimes.map(startOfDay));
+
+  const today = startOfDay(now.getTime());
+  const windowStart = new Date(today);
+  windowStart.setDate(windowStart.getDate() - (rangeDays - 1));
+
+  // Days before the tracker knew anything are not clean, they are unknown.
+  const knownSince = Math.min(
+    ...useTimes.map(startOfDay),
+    startOfDay(toTime(addiction.createdAt) ?? now.getTime())
+  );
+  const start = Math.max(windowStart.getTime(), knownSince);
+
+  let clean = 0;
+  let total = 0;
+  for (const day = new Date(start); day.getTime() <= today; day.setDate(day.getDate() + 1)) {
+    total += 1;
+    if (!useDays.has(day.getTime())) {
+      clean += 1;
+    }
+  }
+
+  return { clean, total };
+};

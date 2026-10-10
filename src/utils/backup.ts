@@ -1,4 +1,4 @@
-import { Addiction, DailyCheckIn, ThemeMode } from '../types';
+import { Addiction, DailyCheckIn, DailyIntention, JournalData, ThemeMode, WeeklyReview } from '../types';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 
@@ -19,12 +19,17 @@ export interface AppBackup {
     // Optional: backups written before daily check-ins existed have no series,
     // and importing one must not wipe the local one.
     checkIns?: DailyCheckIn[];
+    // Same for intentions and weekly reviews, which arrived later still.
+    intentions?: DailyIntention[];
+    reviews?: WeeklyReview[];
     settings: {
       theme: ThemeMode;
       language: string;
     };
   };
 }
+
+export const EMPTY_JOURNAL: JournalData = { checkIns: [], intentions: [], reviews: [] };
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 
@@ -47,7 +52,7 @@ export const buildBackupPayload = (
   addictions: Addiction[],
   theme: ThemeMode,
   source: 'auto' | 'manual',
-  checkIns: DailyCheckIn[] = []
+  journal: JournalData = EMPTY_JOURNAL
 ): AppBackup => {
   return {
     version: '1.0.0',
@@ -55,7 +60,9 @@ export const buildBackupPayload = (
     source,
     data: {
       addictions,
-      checkIns,
+      checkIns: journal.checkIns,
+      intentions: journal.intentions,
+      reviews: journal.reviews,
       settings: {
         theme,
         language: localStorage.getItem(APP_LANGUAGE_KEY) || 'en'
@@ -96,9 +103,9 @@ export const createBackup = async (
   addictions: Addiction[],
   theme: ThemeMode,
   source: 'auto' | 'manual',
-  checkIns: DailyCheckIn[] = []
+  journal: JournalData = EMPTY_JOURNAL
 ): Promise<{ backup: AppBackup; filename: string }> => {
-  const backup = buildBackupPayload(addictions, theme, source, checkIns);
+  const backup = buildBackupPayload(addictions, theme, source, journal);
   const filename = getBackupFilename(new Date(backup.createdAt));
   persistBackupMetadata(backup, filename);
 
@@ -114,7 +121,7 @@ export const createBackup = async (
 export const createAutomaticBackupIfDue = async (
   addictions: Addiction[],
   theme: ThemeMode,
-  checkIns: DailyCheckIn[] = []
+  journal: JournalData = EMPTY_JOURNAL
 ): Promise<{ created: boolean; filename?: string }> => {
   const lastBackupAt = localStorage.getItem(LAST_BACKUP_AT_KEY);
 
@@ -125,7 +132,7 @@ export const createAutomaticBackupIfDue = async (
     }
   }
 
-  const { filename } = await createBackup(addictions, theme, 'auto', checkIns);
+  const { filename } = await createBackup(addictions, theme, 'auto', journal);
   return { created: true, filename };
 };
 
@@ -147,6 +154,14 @@ const assertBackup = (value: unknown): AppBackup => {
   // Not required: only backups written since check-ins were added carry one.
   if (backup.data.checkIns !== undefined && !Array.isArray(backup.data.checkIns)) {
     throw new Error('Backup file has invalid check-in data.');
+  }
+
+  if (backup.data.intentions !== undefined && !Array.isArray(backup.data.intentions)) {
+    throw new Error('Backup file has invalid intention data.');
+  }
+
+  if (backup.data.reviews !== undefined && !Array.isArray(backup.data.reviews)) {
+    throw new Error('Backup file has invalid weekly review data.');
   }
 
   if (!isThemeMode(backup.data.settings.theme)) {

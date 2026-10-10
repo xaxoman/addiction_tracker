@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import IconPicker from './IconPicker';
-import { Addiction, CopingPlan } from '../types';
+import TriggerTagPicker from './TriggerTagPicker';
+import { Addiction, CopingPlan, TriggerTag } from '../types';
 import { createCopingPlanId } from '../utils/dataValidation';
+import { formatPlanStats, getPlanStats, PlanStats } from '../utils/plans';
 import { useI18n } from '../i18n/useI18n';
 
 interface AddAddictionDialogProps {
@@ -88,6 +90,15 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
   const updateCopingPlan = (id: string, field: 'cue' | 'action', value: string) => {
     setCopingPlans(prev => prev.map(plan => (plan.id === id ? { ...plan, [field]: value } : plan)));
   };
+
+  const updateCopingPlanTriggers = (id: string, triggers: TriggerTag[]) => {
+    setCopingPlans(prev => prev.map(plan => (
+      plan.id === id ? { ...plan, triggers: triggers.length > 0 ? triggers : undefined } : plan
+    )));
+  };
+
+  // Track records for the plans being edited; empty while adding a tracker.
+  const planStats = editingAddiction ? getPlanStats(editingAddiction) : new Map<string, PlanStats>();
 
   const removeCopingPlan = (id: string) => {
     setCopingPlans(prev => prev.filter(plan => plan.id !== id));
@@ -404,6 +415,18 @@ const AddAddictionDialog: React.FC<AddAddictionDialogProps> = ({
                       <Trash2 size={16} />
                     </button>
                   </div>
+                  <TriggerTagPicker
+                    value={plan.triggers ?? []}
+                    onChange={(triggers) => updateCopingPlanTriggers(plan.id, triggers)}
+                    size="sm"
+                    label=""
+                    hint={t('planTriggersHint')}
+                  />
+                  {planStats.get(plan.id) && (
+                    <p className="text-xs text-sage-500 dark:text-sage-400">
+                      {formatPlanStats(planStats.get(plan.id) as PlanStats, t)}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

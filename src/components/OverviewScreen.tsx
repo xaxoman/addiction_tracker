@@ -1,19 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Plus, Zap } from 'lucide-react';
-import { Addiction, DailyCheckIn } from '../types';
+import { Addiction, DailyCheckIn, DailyIntention, FollowThrough, WeeklyReview } from '../types';
 import { RelapseDetails, UrgeInput } from '../context/AddictionContext';
-import { CheckInInput } from '../context/CheckInContext';
+import { CheckInInput, IntentionInput } from '../context/CheckInContext';
+import { PlanTarget, RiskNudge } from '../services/checkInNotifications';
 import HeroStreakCard from './HeroStreakCard';
 import MilestoneCard from './MilestoneCard';
 import ProgressChartCard from './ProgressChartCard';
 import UrgeLogCard from './UrgeLogCard';
 import ToolsAndSupport from './ToolsAndSupport';
-import QuoteCard from './QuoteCard';
 import DailyCheckInCard from './DailyCheckInCard';
 import DraggableAddictionList from './DraggableAddictionList';
-import StatsSection from './StatsSection';
+import WeeklyFocusCard from './WeeklyFocusCard';
+import RiskMomentBanner from './RiskMomentBanner';
 import { getStreakStats } from '../utils/streaks';
-import { getQuoteOfTheDay } from '../utils/quotes';
 import { useI18n } from '../i18n/useI18n';
 
 interface OverviewScreenProps {
@@ -21,10 +21,18 @@ interface OverviewScreenProps {
   focusAddiction: Addiction;
   onFocusChange: (id: string) => void;
   todaysCheckIn: DailyCheckIn | null;
+  todaysIntention: DailyIntention | null;
+  pendingIntention: DailyIntention | null;
+  latestReview: WeeklyReview | null;
+  riskNudges: RiskNudge[];
   // Bumped by the navigation's "Journal" entry so the check-in editor opens
   // and scrolls into view from anywhere in the app.
   journalSignal: number;
   onRecordCheckIn: (input: CheckInInput) => void;
+  onSetIntention: (input: IntentionInput) => void;
+  onIntentionOutcome: (date: string, outcome: FollowThrough) => void;
+  onStartReview: () => void;
+  onOpenPlan: (target: PlanTarget) => void;
   onOpenPanic: (addiction: Addiction) => void;
   onOpenBreathing: () => void;
   onAdd: () => void;
@@ -43,13 +51,23 @@ const getGreetingKey = (hour: number): string => {
   return 'goodEvening';
 };
 
+// Home is about what to do now: the risky moment if one is coming, this week's
+// focus, today's intention. Totals and quotes live on the Progress tab.
 const OverviewScreen: React.FC<OverviewScreenProps> = ({
   addictions,
   focusAddiction,
   onFocusChange,
   todaysCheckIn,
+  todaysIntention,
+  pendingIntention,
+  latestReview,
+  riskNudges,
   journalSignal,
   onRecordCheckIn,
+  onSetIntention,
+  onIntentionOutcome,
+  onStartReview,
+  onOpenPlan,
   onOpenPanic,
   onOpenBreathing,
   onAdd,
@@ -62,8 +80,6 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
   onDelete
 }) => {
   const { t } = useI18n();
-  const [quoteIndex, setQuoteIndex] = useState(() => getQuoteOfTheDay());
-  const quoteRef = useRef<HTMLElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
 
   const streak = getStreakStats(focusAddiction);
@@ -75,11 +91,6 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
       journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [journalSignal]);
-
-  const showMotivation = () => {
-    setQuoteIndex(current => current + 1);
-    quoteRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
 
   return (
     <div className="space-y-4">
@@ -125,6 +136,10 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
         </div>
       )}
 
+      <RiskMomentBanner nudges={riskNudges} onOpenPlan={onOpenPlan} />
+
+      <WeeklyFocusCard latestReview={latestReview} onStartReview={onStartReview} />
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-7">
           <HeroStreakCard addiction={focusAddiction} streak={streak} />
@@ -137,6 +152,11 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
           <DailyCheckInCard
             todaysCheckIn={todaysCheckIn}
             onRecord={onRecordCheckIn}
+            todaysIntention={todaysIntention}
+            pendingIntention={pendingIntention}
+            focusAddiction={focusAddiction}
+            onSetIntention={onSetIntention}
+            onIntentionOutcome={onIntentionOutcome}
             openSignal={journalSignal}
           />
         </div>
@@ -153,16 +173,8 @@ const OverviewScreen: React.FC<OverviewScreenProps> = ({
             onOpenUrgeTracker={() => onOpenPanic(focusAddiction)}
             onOpenJournal={() => journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
             onOpenBreathing={onOpenBreathing}
-            onOpenMotivation={showMotivation}
+            onOpenReview={onStartReview}
           />
-        </div>
-
-        <div className="lg:col-span-12">
-          <QuoteCard ref={quoteRef} quoteIndex={quoteIndex} onShuffle={showMotivation} />
-        </div>
-
-        <div className="lg:col-span-12">
-          <StatsSection addictions={addictions} />
         </div>
       </div>
 

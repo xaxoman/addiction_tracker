@@ -28,19 +28,41 @@ export interface ScheduledMilestone {
   body: string;
 }
 
+// A nudge before one risk window, already written for it: which day and hour
+// it is about and which plan to use, so the notification says "Friday at 21 is
+// usually hard. Your plan: a 10-minute walk" instead of a generic warning.
+export interface RiskNudge {
+  window: RiskWindow;
+  title: string;
+  body: string;
+  addictionId?: string;
+  planId?: string;
+}
+
+// What opening a nudge should bring up: the craving screen for that tracker,
+// with that plan first.
+export interface PlanTarget {
+  addictionId?: string;
+  planId?: string;
+}
+
 export interface ReminderOptions {
   dailyEnabled: boolean;
   reminderTime: string;
   dailyTitle: string;
   dailyBody: string;
   riskEnabled: boolean;
-  riskWindows: RiskWindow[];
-  riskTitle: string;
-  riskBody: string;
+  riskNudges: RiskNudge[];
+  // Label of the notification button that opens the plan (native only).
+  openPlanLabel: string;
   milestoneEnabled: boolean;
   milestones: ScheduledMilestone[];
   onTrigger?: () => void;
+  onOpenPlan?: (target: PlanTarget) => void;
 }
+
+const RISK_NUDGE_ACTION_TYPE = 'RISK_NUDGE';
+const OPEN_PLAN_ACTION = 'open-plan';
 
 const formatToday = (): string => {
   return new Date().toISOString().slice(0, 10);
@@ -69,13 +91,25 @@ const shouldSendNow = (reminderTime: string): boolean => {
   return now.getHours() === time.hours && now.getMinutes() === time.minutes;
 };
 
-const showBrowserNotification = (title: string, body: string, tag: string): void => {
+const showBrowserNotification = (
+  title: string,
+  body: string,
+  tag: string,
+  onClick?: () => void
+): void => {
   if (!('Notification' in window)) {
     return;
   }
 
   if (Notification.permission === 'granted') {
-    new Notification(title, { body, tag });
+    const notification = new Notification(title, { body, tag });
+    if (onClick) {
+      notification.onclick = () => {
+        window.focus();
+        onClick();
+        notification.close();
+      };
+    }
   }
 };
 
@@ -99,6 +133,16 @@ const scheduleNativeNotifications = async (options: ReminderOptions): Promise<vo
       ...takeIds(MILESTONE_ID_BASE, MILESTONE_ID_COUNT)
     ]
   });
+
+  if (options.riskEnabled) {
+    // Registering again with the current language keeps the button label in step.
+    await LocalNotifications.registerActionTypes({
+      types: [{
+        id: RISK_NUDGE_ACTION_TYPE,
+        actions: [{ id: OPEN_PLAN_ACTION, title: options.openPlanLabel, foreground: true }]
+      }]
+    });
+  }
 
   const notifications = [];
 
@@ -125,13 +169,15 @@ const scheduleNativeNotifications = async (options: ReminderOptions): Promise<vo
   }
 
   if (options.riskEnabled) {
-    options.riskWindows.slice(0, RISK_NUDGE_ID_COUNT).forEach((window, index) => {
+    options.riskNudges.slice(0, RISK_NUDGE_ID_COUNT).forEach((nudge, index) => {
       notifications.push({
         id: RISK_NUDGE_ID_BASE + index,
-        title: options.riskTitle,
-        body: options.riskBody,
+        title: nudge.title,
+        body: nudge.body,
+        actionTypeId: RISK_NUDGE_ACTION_TYPE,
+        extra: { kind: 'risk', addictionId: nudge.addictionId, planId: nudge.planId },
         schedule: {
-          at: getNextOccurrence(window, RISK_NUDGE_LEAD_MINUTES),
+          at: getNextOccurrence(nudge.window, RISK_NUDGE_LEAD_MINUTES),
           repeats: true,
           every: 'week' as const,
           allowWhileIdle: true
@@ -234,21 +280,23 @@ export const startReminderScheduler = (options: ReminderOptions): (() => void) =
     const today = formatToday();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-    options.riskWindows.forEach(window => {
+    options.riskNudges.forEach(nudge => {
       // The lead time can push a nudge into the previous day, so match against
       // the slot it actually fires in rather than the window itself.
-      const slot = getFireSlot(window, RISK_NUDGE_LEAD_MINUTES);
+      const slot = getFireSlot(nudge.window, RISK_NUDGE_LEAD_MINUTES);
       if (slot.weekday !== now.getDay() || slot.minutes !== nowMinutes) {
         return;
       }
 
-      const key = riskWindowKey(window);
+      const key = riskWindowKey(nudge.window);
       if (localStorage.getItem(key) === today) {
         return;
       }
 
       localStorage.setItem(key, today);
-      showBrowserNotification(options.riskTitle, options.riskBody, key);
+      showBrowserNotification(nudge.title, nudge.body, key, () => {
+        options.onOpenPlan?.({ addictionId: nudge.addictionId, planId: nudge.planId });
+      });
       options.onTrigger?.();
     });
   };
@@ -293,4 +341,24 @@ export const startReminderScheduler = (options: ReminderOptions): (() => void) =
   const intervalId = window.setInterval(tick, 30 * 1000);
 
   return () => window.clearInterval(intervalId);
+};
+
+// Tapping a risk nudge, or its "open the plan" button, lands on the craving
+// screen with the nudge's plan first. Native only: on the web the click
+// handler is attached to the notification itself.
+export const listenForPlanOpens = (onOpenPlan: (target: PlanTarget) => void): (() => void) => {
+  if (!Capacitor.isNativePlatform()) {
+    return () => {};
+  }
+
+  const handle = LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
+    const extra = notification.extra as { kind?: string; addictionId?: string; planId?: string } | undefined;
+    if (extra?.kind === 'risk') {
+      onOpenPlan({ addictionId: extra.addictionId, planId: extra.planId });
+    }
+  });
+
+  return () => {
+    void handle.then(listener => listener.remove());
+  };
 };

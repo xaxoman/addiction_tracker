@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Addiction } from '../types';
-import { sanitizeAddictionData } from '../utils/dataValidation';
+import { Addiction, CopingPlan } from '../types';
+import { createCopingPlanId, sanitizeAddictionData } from '../utils/dataValidation';
 import {
   addUrge,
   appendRelapse,
@@ -21,6 +21,7 @@ type AddictionContextType = {
   deleteRelapse: (id: string, relapseId: string) => void;
   logUrge: (id: string, input: UrgeInput) => void;
   deleteUrge: (id: string, urgeId: string) => void;
+  addCopingPlan: (id: string, plan: Omit<CopingPlan, 'id'>) => void;
   reorderAddictions: (startIndex: number, endIndex: number) => void;
   replaceAddictions: (nextAddictions: Addiction[]) => void;
 };
@@ -113,6 +114,15 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     updateOne(id, addiction => deleteUrgeEntry(addiction, urgeId));
   };
 
+  // For plans created outside the edit dialog: from a suggested alternative,
+  // or from the weekly review.
+  const addCopingPlan = (id: string, plan: Omit<CopingPlan, 'id'>) => {
+    updateOne(id, addiction => ({
+      ...addiction,
+      copingPlans: [...(addiction.copingPlans ?? []), { id: createCopingPlanId(), ...plan }]
+    }));
+  };
+
   const reorderAddictions = (startIndex: number, endIndex: number) => {
     const result = [...addictions];
     const [removed] = result.splice(startIndex, 1);
@@ -139,6 +149,7 @@ export const AddictionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteRelapse,
         logUrge,
         deleteUrge,
+        addCopingPlan,
         reorderAddictions,
         replaceAddictions
       }}

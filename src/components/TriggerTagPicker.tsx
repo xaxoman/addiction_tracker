@@ -1,31 +1,38 @@
 import React from 'react';
-import { TRIGGER_TAGS, TriggerTag } from '../types';
+import { NEED_TAGS, NeedTag, TRIGGER_TAGS, TriggerTag } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { triggerLabelKey } from '../utils/triggers';
+import { needLabelKey } from '../utils/needs';
 
-interface TriggerTagPickerProps {
-  value: TriggerTag[];
-  onChange: (next: TriggerTag[]) => void;
+interface ChipPickerProps<T extends string> {
+  options: readonly T[];
+  labelKey: (tag: T) => string;
+  value: T[];
+  onChange: (next: T[]) => void;
   // The picker is used on the panic screen too, which is dark-on-dark and needs
   // chips that read against a coloured backdrop instead of the card background.
   variant?: 'default' | 'onDark';
+  size?: 'md' | 'sm';
   label?: string;
   hint?: string;
   // Set when the surrounding form requires a tag and none has been picked yet.
   error?: string;
 }
 
-const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
+const ChipPicker = <T extends string>({
+  options,
+  labelKey,
   value,
   onChange,
   variant = 'default',
+  size = 'md',
   label,
   hint,
   error
-}) => {
+}: ChipPickerProps<T>) => {
   const { t } = useI18n();
 
-  const toggle = (tag: TriggerTag) => {
+  const toggle = (tag: T) => {
     onChange(value.includes(tag) ? value.filter(item => item !== tag) : [...value, tag]);
   };
 
@@ -33,11 +40,11 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
 
   return (
     <div>
-      {label !== '' && (
+      {label && (
         <label className={`block text-sm font-medium mb-1 ${
           onDark ? 'text-white/80' : 'text-sage-700 dark:text-sage-300'
         }`}>
-          {label ?? t('triggers')}
+          {label}
         </label>
       )}
       {hint && (
@@ -45,8 +52,8 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
           {hint}
         </p>
       )}
-      <div className="flex flex-wrap gap-2">
-        {TRIGGER_TAGS.map(tag => {
+      <div className={`flex flex-wrap ${size === 'sm' ? 'gap-1.5' : 'gap-2'}`}>
+        {options.map(tag => {
           const isSelected = value.includes(tag);
           return (
             <button
@@ -54,7 +61,9 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
               type="button"
               onClick={() => toggle(tag)}
               aria-pressed={isSelected}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              className={`rounded-full font-medium border transition-colors ${
+                size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+              } ${
                 isSelected
                   ? onDark
                     ? 'bg-white text-sage-900 border-white'
@@ -64,7 +73,7 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
                     : 'bg-white border-sage-200 text-sage-700 hover:bg-sage-100 dark:bg-sage-700 dark:border-sage-600 dark:text-sage-200 dark:hover:bg-sage-600'
               }`}
             >
-              {t(triggerLabelKey(tag))}
+              {t(labelKey(tag))}
             </button>
           );
         })}
@@ -78,13 +87,47 @@ const TriggerTagPicker: React.FC<TriggerTagPickerProps> = ({
   );
 };
 
-interface TriggerTagListProps {
-  tags?: TriggerTag[];
+type TagPickerProps<T extends string> = Omit<ChipPickerProps<T>, 'options' | 'labelKey'>;
+
+const TriggerTagPicker: React.FC<TagPickerProps<TriggerTag>> = ({ label, ...props }) => {
+  const { t } = useI18n();
+  // An explicit empty label hides it, for pickers that sit under their own heading.
+  return (
+    <ChipPicker
+      options={TRIGGER_TAGS}
+      labelKey={triggerLabelKey}
+      label={label ?? t('triggers')}
+      {...props}
+    />
+  );
+};
+
+// "What were you looking for?": the function the habit served, as opposed to
+// the situation it happened in.
+export const NeedTagPicker: React.FC<TagPickerProps<NeedTag>> = ({ label, hint, ...props }) => {
+  const { t } = useI18n();
+  return (
+    <ChipPicker
+      options={NEED_TAGS}
+      labelKey={needLabelKey}
+      label={label ?? t('needsQuestion')}
+      hint={hint ?? t('needsHint')}
+      {...props}
+    />
+  );
+};
+
+interface TagListProps<T extends string> {
+  tags?: T[];
   className?: string;
 }
 
-// Read-only rendering of stored tags, for history entries and summaries.
-export const TriggerTagList: React.FC<TriggerTagListProps> = ({ tags, className = '' }) => {
+const ChipList = <T extends string>({
+  tags,
+  className = '',
+  labelKey,
+  tone
+}: TagListProps<T> & { labelKey: (tag: T) => string; tone: 'sage' | 'amber' }) => {
   const { t } = useI18n();
 
   if (!tags || tags.length === 0) {
@@ -96,14 +139,26 @@ export const TriggerTagList: React.FC<TriggerTagListProps> = ({ tags, className 
       {tags.map(tag => (
         <span
           key={tag}
-          className="px-2 py-0.5 rounded-full text-[0.7rem] font-medium
-                   bg-sage-200 text-sage-700 dark:bg-sage-600 dark:text-sage-200"
+          className={`px-2 py-0.5 rounded-full text-[0.7rem] font-medium ${
+            tone === 'amber'
+              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+              : 'bg-sage-200 text-sage-700 dark:bg-sage-600 dark:text-sage-200'
+          }`}
         >
-          {t(triggerLabelKey(tag))}
+          {t(labelKey(tag))}
         </span>
       ))}
     </div>
   );
 };
+
+// Read-only rendering of stored tags, for history entries and summaries.
+export const TriggerTagList: React.FC<TagListProps<TriggerTag>> = props => (
+  <ChipList {...props} labelKey={triggerLabelKey} tone="sage" />
+);
+
+export const NeedTagList: React.FC<TagListProps<NeedTag>> = props => (
+  <ChipList {...props} labelKey={needLabelKey} tone="amber" />
+);
 
 export default TriggerTagPicker;

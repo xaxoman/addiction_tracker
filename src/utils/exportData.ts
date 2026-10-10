@@ -1,5 +1,5 @@
 // Export utility for addiction data
-import { Addiction, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
+import { Addiction, NeedTag, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
 import { getUrges, summarizeUrges } from './urgeStats';
 
 export interface ExportDataRow {
@@ -29,6 +29,9 @@ export interface ExportDataRow {
   eventPrecededBy: string;
   eventLocation: string;
   eventNote: string;
+  eventNeeds: string;
+  eventPlanUsed: string;
+  eventNextTime: string;
 }
 
 export const formatDateForExport = (date: Date): string => {
@@ -87,6 +90,10 @@ const formatTriggers = (triggers?: TriggerTag[]): string => (
   triggers && triggers.length > 0 ? triggers.join(' | ') : ''
 );
 
+const formatNeeds = (needs?: NeedTag[]): string => (
+  needs && needs.length > 0 ? needs.join(' | ') : ''
+);
+
 const formatCopingPlans = (addiction: Addiction): string => (
   (addiction.copingPlans ?? [])
     .filter(plan => plan.cue || plan.action)
@@ -119,6 +126,10 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
     };
 
     const events: { date: Date; row: Partial<ExportDataRow> }[] = [];
+    const planAction = (planId?: string): string => (
+      (addiction.copingPlans ?? []).find(plan => plan.id === planId)?.action ?? ''
+    );
+    const urgesById = new Map(getUrges(addiction).map(urge => [urge.id, urge]));
 
     // Urges that ended in a slip are exported as their relapse, so the sheet
     // holds one row per event rather than two for the same moment.
@@ -138,7 +149,10 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
           eventHeldSeconds: urge.secondsHeld !== undefined ? String(urge.secondsHeld) : '',
           eventPrecededBy: '',
           eventLocation: '',
-          eventNote: urge.text || ''
+          eventNote: urge.text || '',
+          eventNeeds: formatNeeds(urge.needs),
+          eventPlanUsed: planAction(urge.planId),
+          eventNextTime: ''
         }
       });
     });
@@ -158,7 +172,10 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
           eventHeldSeconds: '',
           eventPrecededBy: note.precededBy || '',
           eventLocation: note.location || '',
-          eventNote: note.text || ''
+          eventNote: note.text || '',
+          eventNeeds: formatNeeds(note.needs),
+          eventPlanUsed: planAction(note.urgeId ? urgesById.get(note.urgeId)?.planId : undefined),
+          eventNextTime: note.nextTime || ''
         }
       });
     });
@@ -174,7 +191,10 @@ export const convertAddictionsToExportData = (addictions: Addiction[]): ExportDa
         eventHeldSeconds: '',
         eventPrecededBy: '',
         eventLocation: '',
-        eventNote: ''
+        eventNote: '',
+        eventNeeds: '',
+        eventPlanUsed: '',
+        eventNextTime: ''
       });
       return;
     }
@@ -213,7 +233,10 @@ const HEADERS = [
   'Held (seconds)',
   'Preceded By',
   'Location',
-  'Event Note'
+  'Event Note',
+  'Looking For',
+  'Plan Used',
+  'Next Time'
 ];
 
 // One ordered list of cell values per row, shared by both formats so the CSV
@@ -242,7 +265,10 @@ const toCells = (row: ExportDataRow): string[] => [
   row.eventHeldSeconds,
   row.eventPrecededBy,
   row.eventLocation,
-  row.eventNote
+  row.eventNote,
+  row.eventNeeds,
+  row.eventPlanUsed,
+  row.eventNextTime
 ];
 
 const csvCell = (value: string): string => `"${value.replace(/"/g, '""')}"`;

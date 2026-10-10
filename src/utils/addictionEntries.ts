@@ -1,5 +1,5 @@
-import { Addiction, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
-import { createRelapseId, createUrgeId } from './dataValidation';
+import { Addiction, CopingPlan, NeedTag, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
+import { createCopingPlanId, createRelapseId, createUrgeId } from './dataValidation';
 
 // Pure transforms over a single tracker. The context only wires these into
 // setState, which keeps the rules about how urges, relapses and the streak
@@ -12,6 +12,11 @@ export interface RelapseDetails {
   precededBy?: string;
   location?: string;
   triggers?: TriggerTag[];
+  needs?: NeedTag[];
+  nextTime?: string;
+  // When set, the "next time" answer is also saved as an if-then plan, tied to
+  // the triggers of this slip, in the same update as the relapse itself.
+  plan?: Omit<CopingPlan, 'id'>;
 }
 
 export interface UrgeInput {
@@ -19,7 +24,9 @@ export interface UrgeInput {
   outcome: 'resisted' | 'relapsed';
   intensity?: number;
   triggers?: TriggerTag[];
+  needs?: NeedTag[];
   text?: string;
+  planId?: string;
   secondsHeld?: number;
   source?: 'panic' | 'manual';
   // Only read when `outcome` is 'relapsed': the paired relapse entry is written
@@ -35,6 +42,10 @@ export const appendRelapse = (
   details?: RelapseDetails,
   extra: Partial<RelapseEntry> = {}
 ): { addiction: Addiction; relapse: RelapseEntry } => {
+  const plan: CopingPlan | undefined = details?.plan
+    ? { id: createCopingPlanId(), ...details.plan }
+    : undefined;
+
   const relapse: RelapseEntry = {
     id: createRelapseId(),
     date,
@@ -42,6 +53,9 @@ export const appendRelapse = (
     precededBy: details?.precededBy,
     location: details?.location,
     triggers: details?.triggers,
+    needs: details?.needs,
+    nextTime: details?.nextTime,
+    planCreatedId: plan?.id,
     previousLastEngaged: new Date(addiction.lastEngaged),
     ...extra
   };
@@ -50,7 +64,8 @@ export const appendRelapse = (
     addiction: {
       ...addiction,
       lastEngaged: date,
-      notes: [...(addiction.notes ?? []), relapse]
+      notes: [...(addiction.notes ?? []), relapse],
+      copingPlans: plan ? [...(addiction.copingPlans ?? []), plan] : addiction.copingPlans
     },
     relapse
   };
@@ -100,7 +115,9 @@ export const addUrge = (addiction: Addiction, input: UrgeInput): Addiction => {
     outcome: input.outcome,
     intensity: input.intensity,
     triggers: input.triggers,
+    needs: input.needs,
     text: input.text,
+    planId: input.planId,
     secondsHeld: input.secondsHeld,
     source: input.source ?? 'manual'
   };
@@ -115,10 +132,10 @@ export const addUrge = (addiction: Addiction, input: UrgeInput): Addiction => {
     // Fall back to the urge's own triggers/note so the slip carries the context
     // the user already gave on the panic screen.
     {
+      ...input.relapse,
       text: input.relapse?.text ?? input.text,
-      precededBy: input.relapse?.precededBy,
-      location: input.relapse?.location,
-      triggers: input.relapse?.triggers ?? input.triggers
+      triggers: input.relapse?.triggers ?? input.triggers,
+      needs: input.relapse?.needs ?? input.needs
     },
     { urgeId: urge.id }
   );

@@ -5,6 +5,13 @@ A Progressive Web App (PWA) and Capacitor mobile app to track addictions, visual
 ## Features
 
 - Addiction tracking with progress stats
+- Craving screen that starts from "what is going on?" and puts the matching if-then plan first
+- Every relapse ends with "what will you do differently next time?", saved as an if-then plan
+- "What were you looking for?" needs, with healthier alternatives on the Progress tab
+- Plan effectiveness ("worked 7 of 8 times") from the plan used on each urge
+- Daily intention (risky moment + what you will do) with an evening "did it go that way?"
+- Weekly review that ends with one focus for the week, shown on the home screen
+- Risk-timed nudges that name the day, time and plan, and open that plan in one tap
 - PWA support (installable + offline)
 - Android support via Capacitor
 - Dark and light theme

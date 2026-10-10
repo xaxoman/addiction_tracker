@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, Phone, ShieldCheck, Sparkles, Target } from 'lucide-react';
-import { Addiction, TriggerTag } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ChevronLeft, Phone, ShieldCheck, Sparkles, Target } from 'lucide-react';
+import { Addiction, CopingPlan, NeedTag, TriggerTag } from '../types';
 import { useI18n } from '../i18n/useI18n';
 import { formatClock, getDaysSince, getSavedLabel } from '../utils/format';
 import { formatCountdown, getMilestoneState } from '../utils/milestones';
-import TriggerTagPicker from './TriggerTagPicker';
+import TriggerTagPicker, { NeedTagPicker } from './TriggerTagPicker';
+import { NextTimePlanField, PlanUsedPicker } from './PlanFields';
 import { getBreathState } from '../utils/breathing';
+import { getCleanDays } from '../utils/streaks';
+import { buildCueFromTriggers, formatPlanStats, getPlanCueText, rankPlans } from '../utils/plans';
 
 // Cravings rise and fall; ten minutes is long enough for the peak to pass and
 // short enough that somebody mid-craving will agree to it.
@@ -14,9 +17,14 @@ const SESSION_SECONDS = 10 * 60;
 export interface UrgeOutcomePayload {
   intensity?: number;
   triggers: TriggerTag[];
+  needs?: NeedTag[];
   text?: string;
+  planId?: string;
   precededBy?: string;
   location?: string;
+  nextTime?: string;
+  // Only on a relapse whose "next time" answer should become an if-then plan.
+  plan?: Omit<CopingPlan, 'id'>;
   secondsHeld: number;
 }
 
@@ -24,6 +32,8 @@ interface PanicScreenProps {
   addiction: Addiction;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  // Opened from a risk nudge: the plan the nudge named goes first.
+  initialPlanId?: string;
   onResisted: (payload: UrgeOutcomePayload) => void;
   onRelapsed: (payload: UrgeOutcomePayload) => void;
   onClose: () => void;
@@ -35,6 +45,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
   addiction,
   emergencyContactName,
   emergencyContactPhone,
+  initialPlanId,
   onResisted,
   onRelapsed,
   onClose
@@ -44,9 +55,13 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
   const [elapsed, setElapsed] = useState(0);
   const [intensity, setIntensity] = useState<number | undefined>(undefined);
   const [triggers, setTriggers] = useState<TriggerTag[]>([]);
+  const [needs, setNeeds] = useState<NeedTag[]>([]);
+  const [usedPlanId, setUsedPlanId] = useState<string | undefined>(undefined);
   const [note, setNote] = useState('');
   const [precededBy, setPrecededBy] = useState('');
   const [location, setLocation] = useState('');
+  const [nextTime, setNextTime] = useState('');
+  const [saveAsPlan, setSaveAsPlan] = useState(true);
   // The relapse debrief is fully required, but nothing is flagged until the
   // first attempt to save it.
   const [showRelapseErrors, setShowRelapseErrors] = useState(false);
@@ -77,28 +92,44 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
   const progress = Math.min(1, elapsed / SESSION_SECONDS);
 
   const streakDays = getDaysSince(addiction.lastEngaged);
+  const cleanDays = getCleanDays(addiction);
   const savedLabel = getSavedLabel(addiction);
   const milestone = getMilestoneState(addiction.lastEngaged);
 
-  const plans = (addiction.copingPlans ?? []).filter(plan => plan.cue || plan.action);
+  // Re-ranked on every tap of "what's happening", so the plan made for this
+  // situation rises to the top while the user is still choosing.
+  const rankedPlans = useMemo(() => {
+    const ranked = rankPlans(addiction, triggers);
+    const pinned = ranked.findIndex(entry => entry.plan.id === initialPlanId);
+    if (pinned > 0 && triggers.length === 0) {
+      ranked.unshift(...ranked.splice(pinned, 1));
+    }
+    return ranked;
+  }, [addiction, triggers, initialPlanId]);
+  const [topPlan, ...otherPlans] = rankedPlans;
+  const plans = rankedPlans.map(entry => entry.plan);
+
+  const secondsHeld = () => Math.floor((Date.now() - startedAtRef.current) / 1000);
 
   const buildPayload = (): UrgeOutcomePayload => ({
     intensity,
     triggers,
+    needs: needs.length > 0 ? needs : undefined,
     text: note.trim() || undefined,
+    planId: usedPlanId,
     precededBy: precededBy.trim() || undefined,
     location: location.trim() || undefined,
-    secondsHeld: Math.floor((Date.now() - startedAtRef.current) / 1000)
+    secondsHeld: secondsHeld()
   });
 
   // Only the relapse step is gated: the resisted exit stays one tap away, since
-  // blocking a win behind a form is how a win goes unlogged.
+  // blocking a win behind a form is how a win goes unlogged. Where it happened
+  // and the free-text account are optional; what happens next time is not.
   const relapseErrors = {
     intensity: intensity === undefined,
     triggers: triggers.length === 0,
     precededBy: precededBy.trim().length === 0,
-    location: location.trim().length === 0,
-    note: note.trim().length === 0
+    nextTime: nextTime.trim().length === 0
   };
   const isRelapseIncomplete = Object.values(relapseErrors).some(Boolean);
 
@@ -107,7 +138,14 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
       setShowRelapseErrors(true);
       return;
     }
-    onRelapsed(buildPayload());
+    const action = nextTime.trim();
+    onRelapsed({
+      ...buildPayload(),
+      nextTime: action,
+      plan: saveAsPlan
+        ? { cue: buildCueFromTriggers(triggers, t), action, triggers }
+        : undefined
+    });
   };
 
   const relapseFieldClass = (hasError: boolean, extra: string = ''): string => `
@@ -195,6 +233,72 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               </p>
             </div>
 
+            <TriggerTagPicker
+              value={triggers}
+              onChange={setTriggers}
+              variant="onDark"
+              size="sm"
+              label={t('whatsHappening')}
+            />
+
+            <div className="rounded-2xl bg-white/10 p-4">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/50 mb-2">
+                <ShieldCheck size={14} />
+                {topPlan && topPlan.matches > 0 ? t('planForThisMoment') : t('yourPlan')}
+              </div>
+              {!topPlan ? (
+                <p className="text-sm text-white/60">{t('noCopingPlans')}</p>
+              ) : (
+                <>
+                  <p className="text-lg leading-relaxed">
+                    <span className="text-white/60">{t('copingPlanCue')} </span>
+                    <span className="font-medium">{getPlanCueText(topPlan.plan, t)}</span>
+                    <span className="text-white/60"> {t('copingPlanAction')} </span>
+                    <span className="font-semibold">{topPlan.plan.action}</span>
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-xs text-white/60">{formatPlanStats(topPlan.stats, t)}</span>
+                    <button
+                      type="button"
+                      onClick={() => setUsedPlanId(usedPlanId === topPlan.plan.id ? undefined : topPlan.plan.id)}
+                      aria-pressed={usedPlanId === topPlan.plan.id}
+                      className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                        usedPlanId === topPlan.plan.id
+                          ? 'bg-white text-forest-700'
+                          : 'bg-white/15 text-white hover:bg-white/25'
+                      }`}
+                    >
+                      {usedPlanId === topPlan.plan.id && <Check size={15} />}
+                      {t('doingThisPlan')}
+                    </button>
+                  </div>
+
+                  {otherPlans.length > 0 && (
+                    <ul className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                      {otherPlans.slice(0, 3).map(({ plan, stats }) => (
+                        <li key={plan.id}>
+                          <button
+                            type="button"
+                            onClick={() => setUsedPlanId(usedPlanId === plan.id ? undefined : plan.id)}
+                            aria-pressed={usedPlanId === plan.id}
+                            className={`w-full text-left rounded-xl px-3 py-2 text-sm transition-colors ${
+                              usedPlanId === plan.id ? 'bg-white/20' : 'hover:bg-white/10'
+                            }`}
+                          >
+                            <span className="text-white/60">{t('copingPlanCue')} </span>
+                            <span>{getPlanCueText(plan, t)}</span>
+                            <span className="text-white/60"> {t('copingPlanAction')} </span>
+                            <span className="font-medium">{plan.action}</span>
+                            <span className="block text-xs text-white/50 mt-0.5">{formatPlanStats(stats, t)}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className="relative mx-auto w-56 h-56 flex items-center justify-center">
               <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90">
                 <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" className="text-white/10" strokeWidth="3" />
@@ -226,18 +330,25 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
 
             <div>
               <h2 className="text-xs uppercase tracking-wide text-white/50 mb-2">{t('atStake')}</h2>
-              <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-white/10 p-4">
-                <div className="text-xs uppercase tracking-wide text-white/50 mb-1">{t('currentStreak')}</div>
-                <div className="text-3xl font-bold">
-                  {streakDays}
-                  <span className="ml-1 text-sm font-medium text-white/60">{t('days')}</span>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-2xl bg-white/10 p-3">
+                  <div className="text-[0.65rem] uppercase tracking-wide text-white/50 mb-1">{t('currentStreak')}</div>
+                  <div className="text-2xl font-bold">
+                    {streakDays}
+                    <span className="ml-1 text-xs font-medium text-white/60">{t('days')}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="rounded-2xl bg-white/10 p-4">
-                <div className="text-xs uppercase tracking-wide text-white/50 mb-1">{t('totalSaved')}</div>
-                <div className="text-3xl font-bold break-words">{savedLabel}</div>
-              </div>
+                <div className="rounded-2xl bg-white/10 p-3">
+                  <div className="text-[0.65rem] uppercase tracking-wide text-white/50 mb-1">{t('cleanDaysShort')}</div>
+                  <div className="text-2xl font-bold tabular-nums">
+                    {cleanDays.clean}
+                    <span className="text-xs font-medium text-white/60">/{cleanDays.total}</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-3">
+                  <div className="text-[0.65rem] uppercase tracking-wide text-white/50 mb-1">{t('totalSaved')}</div>
+                  <div className="text-xl font-bold break-words">{savedLabel}</div>
+                </div>
               </div>
             </div>
 
@@ -265,27 +376,6 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
                 <p className="text-base leading-relaxed whitespace-pre-wrap break-words">{addiction.note}</p>
               </div>
             )}
-
-            <div className="rounded-2xl bg-white/10 p-4">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/50 mb-2">
-                <ShieldCheck size={14} />
-                {t('yourPlan')}
-              </div>
-              {plans.length === 0 ? (
-                <p className="text-sm text-white/60">{t('noCopingPlans')}</p>
-              ) : (
-                <ul className="space-y-2">
-                  {plans.map(plan => (
-                    <li key={plan.id} className="text-base leading-relaxed">
-                      <span className="text-white/60">{t('copingPlanCue')} </span>
-                      <span className="font-medium">{plan.cue}</span>
-                      <span className="text-white/60"> {t('copingPlanAction')} </span>
-                      <span className="font-medium">{plan.action}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
 
             {emergencyContactPhone && (
               <a
@@ -332,6 +422,10 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
 
             <TriggerTagPicker value={triggers} onChange={setTriggers} variant="onDark" hint={t('triggersHint')} />
 
+            <NeedTagPicker value={needs} onChange={setNeeds} variant="onDark" />
+
+            <PlanUsedPicker plans={plans} value={usedPlanId} onChange={setUsedPlanId} variant="onDark" />
+
             <div>
               <label className="block text-sm font-medium text-white/80 mb-1">{t('noteOptional')}</label>
               <textarea
@@ -354,7 +448,9 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => onResisted({ triggers: [], secondsHeld: Math.floor((Date.now() - startedAtRef.current) / 1000) })}
+                // Triggers and the plan were tapped on purpose during the craving,
+                // so skipping the form keeps them and drops only the rest.
+                onClick={() => onResisted({ triggers, planId: usedPlanId, secondsHeld: secondsHeld() })}
                 className="w-full rounded-2xl border border-white/20 px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/10 transition-colors"
               >
                 {t('skipAndSave')}
@@ -367,7 +463,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
           <div className="flex-1 flex flex-col gap-5">
             <div>
               <h2 className="text-2xl font-semibold">{t('recordRelapse')}</h2>
-              <p className="mt-1 text-sm text-white/60">{t('panicNoteStep')}</p>
+              <p className="mt-1 text-sm text-white/70">{t('relapseKindIntro')}</p>
             </div>
 
             {renderIntensityPicker(true)}
@@ -396,36 +492,44 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
               {renderRelapseFieldError(relapseErrors.precededBy)}
             </div>
 
+            <NeedTagPicker value={needs} onChange={setNeeds} variant="onDark" />
+
+            <PlanUsedPicker plans={plans} value={usedPlanId} onChange={setUsedPlanId} variant="onDark" />
+
             <div>
               <label className="block text-sm font-medium text-white/80 mb-1">
-                {t('whereDidItHappen')}<span className="text-rose-300" aria-hidden="true"> *</span>
+                {t('whereDidItHappen')} <span className="text-white/50 font-normal">{t('optionalSuffix')}</span>
               </label>
               <input
                 type="text"
-                required
                 value={location}
                 onChange={event => setLocation(event.target.value)}
                 placeholder={t('locationPlaceholder')}
-                aria-invalid={showRelapseErrors && relapseErrors.location}
-                className={relapseFieldClass(relapseErrors.location)}
+                className={relapseFieldClass(false)}
               />
-              {renderRelapseFieldError(relapseErrors.location)}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-white/80 mb-1">
-                {t('whatHappened')}<span className="text-rose-300" aria-hidden="true"> *</span>
+                {t('whatHappened')} <span className="text-white/50 font-normal">{t('optionalSuffix')}</span>
               </label>
               <textarea
-                required
                 value={note}
                 onChange={event => setNote(event.target.value)}
                 placeholder={t('relapsePrompt')}
-                aria-invalid={showRelapseErrors && relapseErrors.note}
-                className={relapseFieldClass(relapseErrors.note, 'resize-none h-20')}
+                className={relapseFieldClass(false, 'resize-none h-20')}
               />
-              {renderRelapseFieldError(relapseErrors.note)}
             </div>
+
+            <NextTimePlanField
+              value={nextTime}
+              onChange={setNextTime}
+              saveAsPlan={saveAsPlan}
+              onSaveAsPlanChange={setSaveAsPlan}
+              triggers={triggers}
+              variant="onDark"
+              error={showRelapseErrors && relapseErrors.nextTime ? t('fieldRequired') : undefined}
+            />
 
             {showRelapseErrors && isRelapseIncomplete && (
               <p role="alert" className="text-sm font-medium text-rose-200">
@@ -439,7 +543,7 @@ const PanicScreen: React.FC<PanicScreenProps> = ({
                 onClick={handleRelapseConfirm}
                 className="w-full rounded-2xl bg-rose-500 px-4 py-4 text-lg font-semibold hover:bg-rose-400 transition-colors"
               >
-                {t('confirmReset')}
+                {t('saveAndRestart')}
               </button>
               <button
                 type="button"

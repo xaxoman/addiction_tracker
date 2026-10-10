@@ -1,7 +1,7 @@
 import React from 'react';
 import { Addiction } from '../types';
 import mountains from '../assets/mountains.webp';
-import { StreakStats } from '../utils/streaks';
+import { getCleanDays, StreakStats } from '../utils/streaks';
 import { useI18n } from '../i18n/useI18n';
 
 interface HeroStreakCardProps {
@@ -11,6 +11,9 @@ interface HeroStreakCardProps {
 
 const HeroStreakCard: React.FC<HeroStreakCardProps> = ({ addiction, streak }) => {
   const { t } = useI18n();
+  // Sits next to the streak because it survives a slip: one bad day in a good
+  // month still reads as a good month.
+  const cleanDays = getCleanDays(addiction);
 
   return (
     <section className="relative overflow-hidden rounded-2xl min-h-[15rem] shadow-card bg-brand-50 dark:bg-forest-900">
@@ -46,13 +49,13 @@ const HeroStreakCard: React.FC<HeroStreakCardProps> = ({ addiction, streak }) =>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-white/85 dark:bg-white/10 ring-1 ring-forest-900/5 dark:ring-white/10 backdrop-blur-sm px-3 py-2.5 flex items-center gap-2.5">
-            <span className="text-lg leading-none shrink-0" aria-hidden="true">🔥</span>
+            <span className="text-lg leading-none shrink-0" aria-hidden="true">🌱</span>
             <div className="min-w-0">
               <div className="text-[0.65rem] uppercase tracking-wide whitespace-nowrap text-forest-600/80 dark:text-white/60">
-                {t('currentStreak')}
+                {t('last30Days')}
               </div>
-              <div className="text-sm font-semibold text-forest-800 dark:text-white">
-                {streak.current} {t('days')}
+              <div className="text-sm font-semibold text-forest-800 dark:text-white tabular-nums">
+                {t('cleanDaysValue', { clean: cleanDays.clean, total: cleanDays.total })}
               </div>
             </div>
           </div>

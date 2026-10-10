@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  BarChart3, ChevronRight, Flame, Home, NotebookPen, Settings, Sprout, Wind, Zap
+  BarChart3, CalendarCheck, ChevronRight, Flame, Home, NotebookPen, Settings, Sprout, Wind, Zap
 } from 'lucide-react';
 import { AppTab, NavAction } from './navigation';
 import { LeafSprig } from './illustrations';
@@ -32,7 +32,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const tools: Array<{ key: NavAction; icon: React.ReactNode; label: string }> = [
     { key: 'urge', icon: <Zap size={18} />, label: t('urgeTracker') },
     { key: 'journal', icon: <NotebookPen size={18} />, label: t('journal') },
-    { key: 'breathing', icon: <Wind size={18} />, label: t('breathing') }
+    { key: 'breathing', icon: <Wind size={18} />, label: t('breathing') },
+    { key: 'review', icon: <CalendarCheck size={18} />, label: t('weeklyReviewShort') }
   ];
 
   const itemClass = (isActive: boolean) => `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
