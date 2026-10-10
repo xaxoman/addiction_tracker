@@ -20,8 +20,7 @@ import EmptyState from './components/EmptyState';
 import BreathingSheet from './components/BreathingSheet';
 import PanicScreen, { UrgeOutcomePayload } from './components/PanicScreen';
 import WeeklyReviewSheet from './components/WeeklyReviewSheet';
-import StatsSection from './components/StatsSection';
-import QuoteCard from './components/QuoteCard';
+import TrackersScreen from './components/TrackersScreen';
 import { capacitorService } from './services/capacitor';
 import { safeAreaService } from './services/safeArea';
 import { createAutomaticBackupIfDue } from './utils/backup';
@@ -34,7 +33,6 @@ import {
 } from './services/checkInNotifications';
 import { formatWindowTime, getRiskWindows } from './utils/riskWindows';
 import { pickPlan } from './utils/plans';
-import { getQuoteOfTheDay } from './utils/quotes';
 import { toDayKey } from './utils/dataValidation';
 import { WEEKDAY_KEYS } from './utils/weeklyReview';
 import { getUpcomingMilestones } from './utils/milestones';
@@ -83,7 +81,6 @@ const AppContent = () => {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isBreathingOpen, setIsBreathingOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [quoteIndex, setQuoteIndex] = useState(() => getQuoteOfTheDay());
   const [journalSignal, setJournalSignal] = useState(0);
   const [notice, setNotice] = useState<{ text: string; tone: 'backup' | 'urge' } | null>(null);
   // Held by id rather than by object so the open screen keeps re-rendering
@@ -480,6 +477,18 @@ const AppContent = () => {
                   onOpenBreathing={() => setIsBreathingOpen(true)}
                   onAdd={openAddDialog}
                   onReset={handleReset}
+                />
+              ) : (
+                <EmptyState onAdd={openAddDialog} />
+              )
+            )}
+
+            {activeTab === 'trackers' && (
+              addictions.length > 0 ? (
+                <TrackersScreen
+                  addictions={addictions}
+                  onAdd={openAddDialog}
+                  onReset={handleReset}
                   onDeleteRelapse={handleDeleteRelapse}
                   onLogUrge={handleLogUrge}
                   onDeleteUrge={handleDeleteUrge}
@@ -493,18 +502,8 @@ const AppContent = () => {
             )}
 
             {activeTab === 'trends' && (
-              <h1 className="text-xl sm:text-2xl font-semibold text-sage-900 dark:text-white mb-4">
-                {t('progress')}
-              </h1>
-            )}
-
-            {activeTab === 'trends' && (
               addictions.length > 0 ? (
-                <div className="space-y-4">
-                  <TrendCharts addictions={addictions} checkIns={checkIns} onAddPlan={handleAddPlan} />
-                  <StatsSection addictions={addictions} />
-                  <QuoteCard quoteIndex={quoteIndex} onShuffle={() => setQuoteIndex(index => index + 1)} />
-                </div>
+                <TrendCharts addictions={addictions} checkIns={checkIns} onAddPlan={handleAddPlan} />
               ) : (
                 <div className="card p-6 text-center">
                   <h2 className="card-title mb-2">{t('trends')}</h2>

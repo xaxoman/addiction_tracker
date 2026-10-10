@@ -109,16 +109,11 @@ export const PlanEffectivenessCard: React.FC<PlanEffectivenessCardProps> = ({ ad
         <ul className="space-y-3">
           {rows.map(({ plan, stats }) => (
             <li key={plan.id}>
-              <div className="flex items-baseline justify-between gap-3">
-                <div className="min-w-0 text-sm">
-                  <span className="font-medium text-sage-900 dark:text-white">{plan.action}</span>
-                  <span className="block text-xs text-sage-500 dark:text-sage-400 truncate">
-                    {t('copingPlanCue')} {getPlanCueText(plan, t)}
-                  </span>
-                </div>
-                <span className={`shrink-0 text-xs font-medium ${
-                  isStruggling(stats) ? 'text-rose-600 dark:text-rose-400' : 'text-sage-500 dark:text-sage-400'
-                }`}>
+              <div className="text-sm font-medium text-sage-900 dark:text-white break-words">{plan.action}</div>
+              <div className="mt-0.5 text-xs text-sage-500 dark:text-sage-400">
+                {getPlanCueText(plan, t)}
+                {' · '}
+                <span className={isStruggling(stats) ? 'font-medium text-rose-600 dark:text-rose-400' : ''}>
                   {formatPlanStats(stats, t)}
                 </span>
               </div>

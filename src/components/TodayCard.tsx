@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, PencilLine, Sun, Target } from 'lucide-react';
-import { Addiction, DailyCheckIn, DailyIntention, FollowThrough } from '../types';
+import { CheckCircle2, ChevronRight, Crosshair, PencilLine, Sun, Target } from 'lucide-react';
+import { Addiction, DailyCheckIn, DailyIntention, FollowThrough, WeeklyReview } from '../types';
 import { CheckInInput, IntentionInput } from '../context/CheckInContext';
 import { useI18n } from '../i18n/useI18n';
 import { formatWindowTime, getRiskWindows } from '../utils/riskWindows';
 import { rankPlans } from '../utils/plans';
 import FollowThroughButtons from './FollowThroughButtons';
+import { getFocusDay, isReviewDue, REVIEW_INTERVAL_DAYS } from '../utils/weeklyReview';
 
-interface DailyCheckInCardProps {
+interface TodayCardProps {
   todaysCheckIn: DailyCheckIn | null;
   onRecord: (input: CheckInInput) => void;
   todaysIntention: DailyIntention | null;
@@ -16,9 +17,61 @@ interface DailyCheckInCardProps {
   focusAddiction: Addiction;
   onSetIntention: (input: IntentionInput) => void;
   onIntentionOutcome: (date: string, outcome: FollowThrough) => void;
+  latestReview: WeeklyReview | null;
+  onStartReview: () => void;
   // Incremented by the navigation's "Journal" entry to open the editor.
   openSignal?: number;
 }
+
+const iconClass = 'w-9 h-9 rounded-full shrink-0 flex items-center justify-center';
+
+// This week's focus, or the way into the review that sets it.
+const FocusRow: React.FC<{ review: WeeklyReview | null; onStartReview: () => void }> = ({ review, onStartReview }) => {
+  const { t } = useI18n();
+
+  if (!review) {
+    return (
+      <button type="button" onClick={onStartReview} className="w-full p-4 flex items-center gap-3 text-left hover:bg-sage-50 dark:hover:bg-sage-700/40 transition-colors rounded-t-2xl">
+        <span className={`${iconClass} bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300`}>
+          <Crosshair size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-sage-900 dark:text-white">{t('weeklyReviewTitle')}</div>
+          <div className="text-xs text-sage-500 dark:text-sage-400">{t('weeklyReviewPitch')}</div>
+        </div>
+        <ChevronRight size={18} className="shrink-0 text-sage-400" />
+      </button>
+    );
+  }
+
+  const isDue = isReviewDue(review);
+
+  return (
+    <div className="p-4 flex items-start gap-3">
+      <span className={`${iconClass} bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300`}>
+        <Crosshair size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-sage-500 dark:text-sage-400">
+          <span>{t('weeklyFocusTitle')}</span>
+          <span className="normal-case tracking-normal font-medium tabular-nums">
+            {getFocusDay(review)}/{REVIEW_INTERVAL_DAYS}
+          </span>
+        </div>
+        <div className="text-sm font-semibold text-sage-900 dark:text-white break-words">{review.focus}</div>
+        {isDue && (
+          <button
+            type="button"
+            onClick={onStartReview}
+            className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500 transition-colors"
+          >
+            {t('reviewDuePrompt')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const MOOD_EMOJI = ['😞', '🙁', '😐', '🙂', '😄'];
 
@@ -196,8 +249,8 @@ const IntentionSection: React.FC<{
         <div className="space-y-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300">
-                <Target size={20} />
+              <span className={`${iconClass} bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300`}>
+                <Target size={18} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold uppercase tracking-wide text-sage-500 dark:text-sage-400">
@@ -237,8 +290,8 @@ const IntentionSection: React.FC<{
         </div>
       ) : (
         <button type="button" onClick={openEditor} className="w-full flex items-center gap-3 text-left">
-          <span className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300">
-            <Target size={20} />
+          <span className={`${iconClass} bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300`}>
+            <Target size={18} />
           </span>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-sage-900 dark:text-white">{t('intentionTitle')}</div>
@@ -250,7 +303,9 @@ const IntentionSection: React.FC<{
   );
 };
 
-const DailyCheckInCard: React.FC<DailyCheckInCardProps> = ({
+// Everything the user does today, in one card: the week's focus, today's
+// intention for the risky moment, and the mood check-in.
+const TodayCard: React.FC<TodayCardProps> = ({
   todaysCheckIn,
   onRecord,
   todaysIntention,
@@ -258,6 +313,8 @@ const DailyCheckInCard: React.FC<DailyCheckInCardProps> = ({
   focusAddiction,
   onSetIntention,
   onIntentionOutcome,
+  latestReview,
+  onStartReview,
   openSignal = 0
 }) => {
   const { t } = useI18n();
@@ -298,8 +355,8 @@ const DailyCheckInCard: React.FC<DailyCheckInCardProps> = ({
     moodSection = (
       <div className="p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300">
-            <CheckCircle2 size={20} />
+          <span className={`${iconClass} bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300`}>
+            <CheckCircle2 size={18} />
           </span>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-sage-900 dark:text-white">
@@ -331,8 +388,8 @@ const DailyCheckInCard: React.FC<DailyCheckInCardProps> = ({
         onClick={openEditor}
         className="w-full p-4 flex items-center gap-3 text-left hover:bg-sage-50 dark:hover:bg-sage-700/40 transition-colors rounded-b-2xl"
       >
-        <span className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300">
-          <Sun size={20} />
+        <span className={`${iconClass} bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300`}>
+          <Sun size={18} />
         </span>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-sage-900 dark:text-white">{t('checkInPrompt')}</div>
@@ -403,7 +460,8 @@ const DailyCheckInCard: React.FC<DailyCheckInCardProps> = ({
   }
 
   return (
-    <div className="card divide-y divide-sage-100 dark:divide-sage-700">
+    <section className="card divide-y divide-sage-100 dark:divide-sage-700" aria-label={t('today')}>
+      <FocusRow review={latestReview} onStartReview={onStartReview} />
       <IntentionSection
         intention={todaysIntention}
         pending={pendingIntention}
@@ -412,8 +470,8 @@ const DailyCheckInCard: React.FC<DailyCheckInCardProps> = ({
         onOutcome={onIntentionOutcome}
       />
       {moodSection}
-    </div>
+    </section>
   );
 };
 
-export default DailyCheckInCard;
+export default TodayCard;

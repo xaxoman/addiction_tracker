@@ -9,7 +9,6 @@ interface DraggableAddictionListProps {
   onDeleteRelapse: (id: string, relapseId: string) => void;
   onLogUrge: (id: string, input: UrgeInput) => void;
   onDeleteUrge: (id: string, urgeId: string) => void;
-  onOpenPanic: (addiction: Addiction) => void;
   onReorder: (startIndex: number, endIndex: number) => void;
   onEdit: (addiction: Addiction) => void;
   onDelete: (id: string) => void;
@@ -21,7 +20,6 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
   onDeleteRelapse,
   onLogUrge,
   onDeleteUrge,
-  onOpenPanic,
   onReorder,
   onEdit,
   onDelete
@@ -91,7 +89,6 @@ const DraggableAddictionList: React.FC<DraggableAddictionListProps> = ({
             onDeleteRelapse={onDeleteRelapse}
             onLogUrge={onLogUrge}
             onDeleteUrge={onDeleteUrge}
-            onOpenPanic={onOpenPanic}
             onEdit={onEdit}
             onDelete={onDelete}
           />

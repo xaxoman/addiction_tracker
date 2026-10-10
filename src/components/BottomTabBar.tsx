@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Home, Settings, User } from 'lucide-react';
+import { BarChart3, Home, ListChecks, Settings } from 'lucide-react';
 import { AppTab, NavAction } from './navigation';
 import { useI18n } from '../i18n/useI18n';
 
@@ -34,18 +34,18 @@ const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabChange, onA
       onSelect: () => onTabChange('trends')
     },
     {
+      key: 'trackers',
+      icon: <ListChecks size={20} />,
+      label: t('trackersTab'),
+      isActive: activeTab === 'trackers',
+      onSelect: () => onTabChange('trackers')
+    },
+    {
       key: 'settings',
       icon: <Settings size={20} />,
       label: t('settings'),
       isActive: false,
       onSelect: () => onAction('settings')
-    },
-    {
-      key: 'account',
-      icon: <User size={20} />,
-      label: t('you'),
-      isActive: false,
-      onSelect: () => onAction('account')
     }
   ];
 

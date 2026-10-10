@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   MoreVertical, RefreshCw, Edit, Trash2, X, Calendar, ChevronLeft, ChevronRight,
-  Download, StickyNote, Flame, ShieldCheck, Zap
+  Download, ShieldCheck
 } from 'lucide-react';
 import { Addiction, NeedTag, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
 import { RelapseDetails, UrgeInput } from '../context/AddictionContext';
-import ProgressCircle from './ProgressCircle';
 import TriggerTagPicker, { NeedTagList, NeedTagPicker, TriggerTagList } from './TriggerTagPicker';
-import { NextTimePlanField, PlanUsedPicker } from './PlanFields';
-import { buildCueFromTriggers, rankPlans } from '../utils/plans';
+import { PlanUsedPicker } from './PlanFields';
+import RelapseDialog from './RelapseDialog';
+import Disclosure from './Disclosure';
+import { rankPlans } from '../utils/plans';
+import { getTriggerOrder } from '../utils/triggers';
 import { exportSingleAddictionToCSV } from '../utils/exportData';
 import { useI18n } from '../i18n/useI18n';
-import { formatElapsed, formatHeldDuration, getDaysSince, getSavedLabel } from '../utils/format';
-import { formatCountdown, getMilestoneState } from '../utils/milestones';
-import { startOfCurrentMonth, summarizeUrges } from '../utils/urgeStats';
+import { formatHeldDuration, getDaysSince, getSavedLabel } from '../utils/format';
+import { getMilestoneState } from '../utils/milestones';
+import { getCleanDays } from '../utils/streaks';
 
 interface AddictionItemProps {
   addiction: Addiction;
@@ -21,7 +23,6 @@ interface AddictionItemProps {
   onDeleteRelapse: (id: string, relapseId: string) => void;
   onLogUrge: (id: string, input: UrgeInput) => void;
   onDeleteUrge: (id: string, urgeId: string) => void;
-  onOpenPanic: (addiction: Addiction) => void;
   onEdit: (addiction: Addiction) => void;
   onDelete: (id: string) => void;
 }
@@ -74,29 +75,15 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   onDeleteRelapse,
   onLogUrge,
   onDeleteUrge,
-  onOpenPanic,
   onEdit,
   onDelete
 }) => {
   const { t, language } = useI18n();
   const locale = language === 'it' ? 'it-IT' : 'en-US';
-  const [timeSince, setTimeSince] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showUrgeDialog, setShowUrgeDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [resetDate, setResetDate] = useState(() => toDateInputValue(new Date()));
-  const [resetTime, setResetTime] = useState(() => toTimeInputValue(new Date()));
-  const [resetNote, setResetNote] = useState('');
-  const [resetPrecededBy, setResetPrecededBy] = useState('');
-  const [resetLocation, setResetLocation] = useState('');
-  const [resetTriggers, setResetTriggers] = useState<TriggerTag[]>([]);
-  const [resetNeeds, setResetNeeds] = useState<NeedTag[]>([]);
-  const [resetNextTime, setResetNextTime] = useState('');
-  const [resetSaveAsPlan, setResetSaveAsPlan] = useState(true);
-  // Errors stay hidden until the first save attempt, so an untouched form does
-  // not open covered in red.
-  const [showResetErrors, setShowResetErrors] = useState(false);
   const [urgeDate, setUrgeDate] = useState(() => toDateInputValue(new Date()));
   const [urgeTime, setUrgeTime] = useState(() => toTimeInputValue(new Date()));
   const [urgeNote, setUrgeNote] = useState('');
@@ -107,22 +94,6 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
-  // Open the reset dialog with the date/time fields freshly defaulted to "now"
-  // (in local time) so stale values from a previous open don't linger.
-  const openResetDialog = () => {
-    const now = new Date();
-    setResetDate(toDateInputValue(now));
-    setResetTime(toTimeInputValue(now));
-    setResetNote('');
-    setResetPrecededBy('');
-    setResetLocation('');
-    setResetTriggers([]);
-    setResetNeeds([]);
-    setResetNextTime('');
-    setResetSaveAsPlan(true);
-    setShowResetErrors(false);
-    setShowResetDialog(true);
-  };
 
   const openUrgeDialog = () => {
     const now = new Date();
@@ -144,24 +115,6 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     setShowHistoryDialog(true);
   };
 
-  useEffect(() => {
-    const updateTimeSince = () => {
-      const now = new Date();
-      const lastEngaged = new Date(addiction.lastEngaged);
-      const diffTime = Math.abs(now.getTime() - lastEngaged.getTime());
-
-      const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-
-      setTimeSince({ days, hours, minutes, seconds });
-    };
-
-    updateTimeSince();
-    const interval = setInterval(updateTimeSince, 1000);
-    return () => clearInterval(interval);
-  }, [addiction.lastEngaged]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -183,43 +136,6 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     const [hours, minutes] = timeValue.split(':').map(Number);
     const combined = new Date(year, month - 1, day, hours, minutes, 0, 0);
     return isNaN(combined.getTime()) ? null : combined;
-  };
-
-  // The relapse form asks for the parts that change what happens next: what
-  // set it off, what came before, and what the user will do differently. Where
-  // it happened and the free-text account are optional.
-  const resetErrors = {
-    date: resetDate.trim().length === 0,
-    time: resetTime.trim().length === 0,
-    triggers: resetTriggers.length === 0,
-    precededBy: resetPrecededBy.trim().length === 0,
-    nextTime: resetNextTime.trim().length === 0
-  };
-  const isResetIncomplete = Object.values(resetErrors).some(Boolean);
-
-  const handleResetConfirm = () => {
-    if (isResetIncomplete) {
-      setShowResetErrors(true);
-      return;
-    }
-    const resetDateTime = combineDateAndTime(resetDate, resetTime);
-    if (!resetDateTime) {
-      setShowResetErrors(true);
-      return; // Guard against incomplete/invalid input
-    }
-    const nextTime = resetNextTime.trim();
-    onReset(addiction.id, resetDateTime, {
-      text: resetNote.trim() || undefined,
-      precededBy: resetPrecededBy.trim(),
-      location: resetLocation.trim() || undefined,
-      triggers: resetTriggers,
-      needs: resetNeeds.length > 0 ? resetNeeds : undefined,
-      nextTime,
-      plan: resetSaveAsPlan
-        ? { cue: buildCueFromTriggers(resetTriggers, t), action: nextTime, triggers: resetTriggers }
-        : undefined
-    });
-    setShowResetDialog(false);
   };
 
   const handleUrgeConfirm = () => {
@@ -300,28 +216,10 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   };
 
   const daysSince = getDaysSince(addiction.lastEngaged);
+  const cleanDays = getCleanDays(addiction);
   const progress = getProgress();
-  // Recomputed on every tick rather than memoized: the countdown has to stay
-  // live, and walking six milestones costs nothing.
   const milestone = getMilestoneState(addiction.lastEngaged);
-  const monthlyUrges = useMemo(
-    () => summarizeUrges(addiction, startOfCurrentMonth()),
-    [addiction]
-  );
-
-  const getCostLabel = () => {
-    const costValue = typeof addiction.cost === 'number' && !isNaN(addiction.cost) ? addiction.cost : 0;
-    switch (addiction.costType) {
-      case 'money':
-        return `$${costValue.toFixed(2)}`;
-      case 'time':
-        return `${costValue} min`;
-      case 'health':
-        return `${costValue} impact`;
-      default:
-        return `${costValue}`;
-    }
-  };
+  const triggerOrder = useMemo(() => getTriggerOrder(addiction), [addiction]);
 
   const getGoalLabel = () => {
     if (!addiction.goal || !addiction.goal.value || isNaN(addiction.goal.value)) {
@@ -330,7 +228,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     if (addiction.goal.type === 'money') {
       return `$${addiction.goal.value.toFixed(2)}`;
     }
-    return `${addiction.goal.value} ${addiction.goal.unit || 'units'}`;
+    // Unit names double as the add dialog's option labels, which are title case.
+    return `${addiction.goal.value} ${t(addiction.goal.unit || 'days').toLowerCase()}`;
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -470,30 +369,6 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     </div>
   );
 
-  // Shared field styling for the relapse form: every input switches to a rose
-  // outline once it has been left empty and a save has been attempted.
-  const resetFieldClass = (hasError: boolean, extra: string = ''): string => `
-    w-full px-3 py-2 border rounded-xl bg-white dark:bg-sage-700 text-sage-900 dark:text-white
-    focus:ring-2 ${extra} ${
-      showResetErrors && hasError
-        ? 'border-rose-400 dark:border-rose-500 focus:ring-rose-500 focus:border-rose-500'
-        : 'border-sage-200 dark:border-sage-600 focus:ring-brand-500 focus:border-brand-500'
-    }`;
-
-  // The asterisk is decorative; `required` on the control is what assistive
-  // technology actually announces.
-  const renderRequiredLabel = (label: string) => (
-    <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-      {label} <span className="text-rose-500" aria-hidden="true">*</span>
-    </label>
-  );
-
-  const renderResetFieldError = (hasError: boolean) => (
-    showResetErrors && hasError
-      ? <p className="mt-1 text-xs font-medium text-rose-600 dark:text-rose-400">{t('fieldRequired')}</p>
-      : null
-  );
-
   // One timeline row, shared by the selected-day panel and the recent list.
   const renderTimelineRow = (event: TimelineEvent, showDate: boolean) => {
     const isUrge = event.kind === 'urge';
@@ -597,99 +472,76 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
   return (
     <>
-      <div className="card p-5 hover:shadow-card-hover transition-shadow duration-300">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center text-2xl 
-                          bg-brand-50 dark:bg-brand-500/15 rounded-2xl 
-                          text-brand-600 dark:text-brand-300">
+      <div className="card p-5">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 shrink-0 flex items-center justify-center text-2xl
+                          bg-brand-50 dark:bg-brand-500/15 rounded-2xl">
               {addiction.icon}
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h3 className="text-lg font-semibold text-sage-900 dark:text-white">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-semibold text-sage-900 dark:text-white truncate">
                   {addiction.name}
                 </h3>
                 {milestone.latest && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] font-semibold
                                  bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                     {milestone.latest.emoji} {t(milestone.latest.labelKey)}
                   </span>
                 )}
               </div>
-              <div className="text-sm text-sage-500 dark:text-sage-400 space-y-1">
-                <p>Last engaged: {new Date(addiction.lastEngaged).toLocaleDateString()}</p>
-                <p className="font-medium text-brand-600 dark:text-brand-400">
-                  {formatElapsed(timeSince.days, timeSince.hours, timeSince.minutes, timeSince.seconds)} ago
-                </p>
-              </div>
+              <p className="text-sm text-sage-500 dark:text-sage-400">
+                {t('trackerStatsLine', {
+                  days: daysSince,
+                  clean: cleanDays.clean,
+                  total: cleanDays.total,
+                  saved: getSavedLabel(addiction)
+                })}
+              </p>
             </div>
           </div>
-          <div className="relative menu-container">
-            <button 
+          <div className="relative menu-container shrink-0">
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
-              className="text-sage-400 hover:text-sage-600 dark:hover:text-sage-300 
-                       p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-sage-700 
-                       transition-colors"
-              aria-label="More options"
+              className="text-sage-400 hover:text-sage-600 dark:hover:text-sage-300
+                       p-2 -mr-2 rounded-lg hover:bg-sage-100 dark:hover:bg-sage-700 transition-colors"
+              aria-label={t('moreOptions')}
             >
               <MoreVertical size={20} />
             </button>
-            
+
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-sage-800 
-                            rounded-lg shadow-lg border border-sage-200 dark:border-sage-700 
+              <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-sage-800
+                            rounded-lg shadow-lg border border-sage-200 dark:border-sage-700
                             py-1 z-10">
-                <button
-                  onClick={() => {
-                    openUrgeDialog();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
-                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
-                >
-                  <ShieldCheck size={16} />
-                  {t('logUrgeManually')}
-                </button>
-                <button
-                  onClick={() => {
-                    openHistoryDialog();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
-                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
-                >
-                  <Calendar size={16} />
-                  {t('viewHistory')}
-                </button>
-                <button
-                  onClick={handleExportData}
-                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
-                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
-                >
-                  <Download size={16} />
-                  {t('exportData')}
-                </button>
-                <button
-                  onClick={() => {
-                    onEdit(addiction);
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300 
-                           hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
-                >
-                  <Edit size={16} />
-                  {t('edit')}
-                </button>
+                {[
+                  { key: 'urge', icon: <ShieldCheck size={16} />, label: t('logUrgeManually'), onSelect: openUrgeDialog },
+                  { key: 'export', icon: <Download size={16} />, label: t('exportData'), onSelect: handleExportData },
+                  { key: 'edit', icon: <Edit size={16} />, label: t('edit'), onSelect: () => onEdit(addiction) }
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      item.onSelect();
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-sage-700 dark:text-sage-300
+                             hover:bg-sage-100 dark:hover:bg-sage-700 flex items-center gap-2"
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                ))}
                 <button
                   onClick={() => {
                     onDelete(addiction.id);
                     setIsMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400
                            hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
                 >
                   <Trash2 size={16} />
@@ -699,121 +551,48 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
             )}
           </div>
         </div>
-        
-        {addiction.note && (
-          <div className="mb-6 flex items-start gap-2 rounded-lg p-3 
-                        bg-amber-50 dark:bg-amber-900/20 
-                        text-sm text-amber-900 dark:text-amber-200">
-            <StickyNote size={16} className="mt-0.5 shrink-0" />
-            <p className="whitespace-pre-wrap break-words">{addiction.note}</p>
-          </div>
-        )}
 
-        <div className="grid grid-cols-4 max-[640px]:grid-cols-2 gap-3 mb-4">
-          <div className="bg-sage-50 dark:bg-sage-700/50 rounded-xl p-3">
-            <div className="text-sm text-sage-500 dark:text-sage-400 mb-1">
-              {t('costPerTime')}
-            </div>
-            <div className="text-lg font-semibold text-sage-900 dark:text-white">
-              {getCostLabel()}
-            </div>
-          </div>
-          
-          <div className="bg-brand-50 dark:bg-brand-900/30 rounded-xl p-3">
-            <div className="text-sm text-brand-600 dark:text-brand-400 mb-1">
-              {t('cleanFor')}
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-semibold text-brand-700 dark:text-brand-300">
-                {daysSince}
-              </span>
-              <span className="text-brand-600 dark:text-brand-400">
-                {t('days')}
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-brand-50 dark:bg-brand-900/30 rounded-xl p-3">
-            <div className="text-sm text-brand-600 dark:text-brand-400 mb-1">
-              {t('resistedThisMonth')}
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-semibold text-brand-700 dark:text-brand-300">
-                {monthlyUrges.resisted}
-              </span>
-              {monthlyUrges.total > 0 && (
-                <span className="text-sm text-brand-600 dark:text-brand-400">
-                  / {monthlyUrges.total}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-amber-50 dark:bg-amber-900/25 rounded-xl p-3">
-            <div className="text-sm text-amber-700 dark:text-amber-400 mb-1">
-              {t('goal')}
-            </div>
-            <div className="text-lg font-semibold text-amber-800 dark:text-amber-300">
-              {getGoalLabel()}
-            </div>
-          </div>
-        </div>
-
-        {milestone.next && milestone.msUntilNext !== undefined && (
-          <div className="mb-4">
+        {progress.percentage > 0 || addiction.goal?.value ? (
+          <div className="mt-4">
             <div className="flex items-center justify-between text-xs text-sage-500 dark:text-sage-400 mb-1">
-              <span className="flex items-center gap-1">
-                <Flame size={13} className="text-amber-500" />
-                {t('nextMilestone')}: {milestone.next.emoji} {t(milestone.next.labelKey)}
-              </span>
-              <span>{t('milestoneIn', { time: formatCountdown(milestone.msUntilNext) })}</span>
+              <span>{t('goal')}: {getGoalLabel()}</span>
+              <span className="tabular-nums">{Math.round(progress.percentage)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-sage-100 dark:bg-sage-700 overflow-hidden">
               <div
-                className="h-full rounded-full bg-amber-400 dark:bg-amber-500 transition-all duration-500"
-                style={{ width: `${Math.round(milestone.progressToNext * 100)}%` }}
+                className="h-full rounded-full bg-brand-500 dark:bg-brand-400 transition-all duration-500"
+                style={{ width: `${Math.round(progress.percentage)}%` }}
               />
             </div>
           </div>
+        ) : null}
+
+        {addiction.note && (
+          <p className="mt-4 text-sm text-sage-600 dark:text-sage-300 whitespace-pre-wrap break-words line-clamp-3">
+            {addiction.note}
+          </p>
         )}
 
-        <button
-          onClick={() => onOpenPanic(addiction)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 mb-4 rounded-xl
-                   text-base font-semibold text-white shadow-card
-                   bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500
-                   transition-colors"
-        >
-          <Zap size={18} />
-          {t('cravingNow')}
-        </button>
-
-        <div className="flex items-center justify-between pt-4 border-t border-sage-100 dark:border-sage-700">
-          <div>
-            <div className="text-sm text-sage-500 dark:text-sage-400 mb-1">
-              {t('totalSaved')}
-            </div>
-            <div className="text-xl font-semibold text-brand-700 dark:text-brand-300">
-              {getSavedLabel(addiction)}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16">
-              <ProgressCircle percentage={progress.percentage} />
-            </div>
-            
-            <button
-              onClick={openResetDialog}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
-                       bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300
-                       border border-rose-100 dark:border-rose-900/50
-                       hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
-            >
-              <RefreshCw size={16} />
-              <span>{t('hadRelapse')}</span>
-            </button>
-          </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={openHistoryDialog}
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium
+                     border border-sage-200 dark:border-sage-600 text-sage-700 dark:text-sage-200
+                     hover:bg-sage-100 dark:hover:bg-sage-700 transition-colors"
+          >
+            <Calendar size={16} />
+            {t('historyTitle')}
+          </button>
+          <button
+            onClick={() => setShowResetDialog(true)}
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium
+                     bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300
+                     border border-rose-100 dark:border-rose-900/50
+                     hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
+          >
+            <RefreshCw size={16} />
+            {t('hadRelapse')}
+          </button>
         </div>
       </div>
 
@@ -836,7 +615,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                    {t('lastEngagedDate')}
+                    {t('when')}
                   </label>
                   <input
                     type="date"
@@ -863,28 +642,35 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                 </div>
               </div>
 
-              {renderIntensityPicker()}
-
-              <TriggerTagPicker value={urgeTriggers} onChange={setUrgeTriggers} hint={t('triggersHint')} />
-
-              <NeedTagPicker value={urgeNeeds} onChange={setUrgeNeeds} />
+              <TriggerTagPicker
+                value={urgeTriggers}
+                onChange={setUrgeTriggers}
+                label={t('whatSetItOff')}
+                order={triggerOrder}
+                collapsedCount={6}
+              />
 
               <PlanUsedPicker plans={rankedPlans} value={urgePlanId} onChange={setUrgePlanId} />
 
-              <div>
-                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                  {t('noteOptional')}
-                </label>
-                <textarea
-                  value={urgeNote}
-                  onChange={(e) => setUrgeNote(e.target.value)}
-                  placeholder={t('urgeNotePlaceholder')}
-                  className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
-                            bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
-                            focus:ring-2 focus:ring-brand-500 focus:border-brand-500
-                            resize-none h-20"
-                />
-              </div>
+              <NeedTagPicker value={urgeNeeds} onChange={setUrgeNeeds} hint="" />
+
+              <Disclosure>
+                {renderIntensityPicker()}
+                <div>
+                  <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
+                    {t('noteLabel')}
+                  </label>
+                  <textarea
+                    value={urgeNote}
+                    onChange={(e) => setUrgeNote(e.target.value)}
+                    placeholder={t('urgeNotePlaceholder')}
+                    className="w-full px-3 py-2 border border-sage-200 dark:border-sage-600 rounded-xl 
+                              bg-white dark:bg-sage-700 text-sage-900 dark:text-white 
+                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500
+                              resize-none h-20"
+                  />
+                </div>
+              </Disclosure>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -910,135 +696,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
       )}
 
       {showResetDialog && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-sage-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl animate-fade-in-up">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-sage-900 dark:text-white">
-                {t('recordRelapse')}
-              </h2>
-              <button 
-                onClick={() => setShowResetDialog(false)}
-                className="text-sage-500 hover:text-sage-700 dark:text-sage-400 dark:hover:text-sage-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="-mt-2 mb-4 text-sm text-sage-500 dark:text-sage-400">{t('relapseKindIntro')}</p>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  {renderRequiredLabel(t('lastEngagedDate'))}
-                  <input
-                    type="date"
-                    required
-                    value={resetDate}
-                    onChange={(e) => setResetDate(e.target.value)}
-                    max={toDateInputValue(new Date())}
-                    aria-invalid={showResetErrors && resetErrors.date}
-                    className={resetFieldClass(resetErrors.date)}
-                  />
-                  {renderResetFieldError(resetErrors.date)}
-                </div>
-                <div>
-                  {renderRequiredLabel(t('time'))}
-                  <input
-                    type="time"
-                    required
-                    value={resetTime}
-                    onChange={(e) => setResetTime(e.target.value)}
-                    aria-invalid={showResetErrors && resetErrors.time}
-                    className={resetFieldClass(resetErrors.time)}
-                  />
-                  {renderResetFieldError(resetErrors.time)}
-                </div>
-              </div>
-
-              <TriggerTagPicker
-                value={resetTriggers}
-                onChange={setResetTriggers}
-                label={`${t('triggers')} *`}
-                hint={t('triggersHint')}
-                error={showResetErrors && resetErrors.triggers ? t('triggersRequired') : undefined}
-              />
-
-              <div>
-                {renderRequiredLabel(t('whatPrecededIt'))}
-                <textarea
-                  required
-                  value={resetPrecededBy}
-                  onChange={(e) => setResetPrecededBy(e.target.value)}
-                  placeholder={t('precededByPlaceholder')}
-                  aria-invalid={showResetErrors && resetErrors.precededBy}
-                  className={resetFieldClass(resetErrors.precededBy, 'resize-none h-20')}
-                />
-                {renderResetFieldError(resetErrors.precededBy)}
-              </div>
-
-              <NeedTagPicker value={resetNeeds} onChange={setResetNeeds} />
-
-              <div>
-                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                  {t('whereDidItHappen')} <span className="font-normal text-sage-400">{t('optionalSuffix')}</span>
-                </label>
-                <input
-                  type="text"
-                  value={resetLocation}
-                  onChange={(e) => setResetLocation(e.target.value)}
-                  placeholder={t('locationPlaceholder')}
-                  className={resetFieldClass(false)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
-                  {t('whatHappened')} <span className="font-normal text-sage-400">{t('optionalSuffix')}</span>
-                </label>
-                <textarea
-                  value={resetNote}
-                  onChange={(e) => setResetNote(e.target.value)}
-                  placeholder={t('relapsePrompt')}
-                  className={resetFieldClass(false, 'resize-none h-20')}
-                />
-              </div>
-
-              <NextTimePlanField
-                value={resetNextTime}
-                onChange={setResetNextTime}
-                saveAsPlan={resetSaveAsPlan}
-                onSaveAsPlanChange={setResetSaveAsPlan}
-                triggers={resetTriggers}
-                error={showResetErrors && resetErrors.nextTime ? t('fieldRequired') : undefined}
-              />
-
-              {showResetErrors && isResetIncomplete && (
-                <p role="alert" className="text-sm font-medium text-rose-600 dark:text-rose-400">
-                  {t('relapseFieldsRequired')}
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setShowResetDialog(false)}
-                  className="px-4 py-2.5 border border-sage-200 dark:border-sage-600 text-sage-700 dark:text-sage-200 
-                            rounded-xl hover:bg-sage-100 dark:hover:bg-sage-700 
-                            transition-colors duration-200"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  onClick={handleResetConfirm}
-                  className="px-5 py-2.5 bg-rose-600 dark:bg-rose-600 text-white font-semibold 
-                            rounded-xl hover:bg-rose-700 dark:hover:bg-rose-500 
-                            transition-colors duration-200"
-                >
-                  {t('saveAndRestart')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <RelapseDialog
+          addiction={addiction}
+          onClose={() => setShowResetDialog(false)}
+          onConfirm={(date, details) => {
+            onReset(addiction.id, date, details);
+            setShowResetDialog(false);
+          }}
+        />
       )}
 
       {showHistoryDialog && (
