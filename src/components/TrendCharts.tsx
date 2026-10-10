@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Addiction, DailyCheckIn } from '../types';
+import { Addiction, CopingPlan, DailyCheckIn } from '../types';
+import { NeedInsightCard, PlanEffectivenessCard } from './InsightCards';
 import { useI18n } from '../i18n/useI18n';
 import { formatPercent, getTopTriggers, getUrges, startOfCurrentMonth, summarizeUrges } from '../utils/urgeStats';
 import { formatWindowTime, getRiskWindows } from '../utils/riskWindows';
@@ -8,6 +9,7 @@ import { triggerLabelKey } from '../utils/triggers';
 interface TrendChartsProps {
   addictions: Addiction[];
   checkIns: DailyCheckIn[];
+  onAddPlan: (addictionId: string, plan: Omit<CopingPlan, 'id'>) => void;
 }
 
 interface Point {
@@ -64,7 +66,7 @@ const getWeekdayLabel = (index: number, t: (key: string) => string): string => {
   return t(keys[index]);
 };
 
-const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
+const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns, onAddPlan }) => {
   const { t } = useI18n();
   const [selectedId, setSelectedId] = useState<string | null>(addictions[0]?.id ?? null);
 
@@ -432,6 +434,10 @@ const TrendCharts: React.FC<TrendChartsProps> = ({ addictions, checkIns }) => {
           </ul>
         )}
       </section>
+
+      <NeedInsightCard addiction={selected} onAddPlan={onAddPlan} />
+
+      <PlanEffectivenessCard addiction={selected} />
 
       <section className="card p-5">
         <h3 className="card-title mb-3">{t('riskyWindows')}</h3>

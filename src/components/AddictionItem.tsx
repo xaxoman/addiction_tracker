@@ -3,10 +3,12 @@ import {
   MoreVertical, RefreshCw, Edit, Trash2, X, Calendar, ChevronLeft, ChevronRight,
   Download, StickyNote, Flame, ShieldCheck, Zap
 } from 'lucide-react';
-import { Addiction, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
+import { Addiction, NeedTag, RelapseEntry, TriggerTag, UrgeEntry } from '../types';
 import { RelapseDetails, UrgeInput } from '../context/AddictionContext';
 import ProgressCircle from './ProgressCircle';
-import TriggerTagPicker, { TriggerTagList } from './TriggerTagPicker';
+import TriggerTagPicker, { NeedTagList, NeedTagPicker, TriggerTagList } from './TriggerTagPicker';
+import { NextTimePlanField, PlanUsedPicker } from './PlanFields';
+import { buildCueFromTriggers, rankPlans } from '../utils/plans';
 import { exportSingleAddictionToCSV } from '../utils/exportData';
 import { useI18n } from '../i18n/useI18n';
 import { formatElapsed, formatHeldDuration, getDaysSince, getSavedLabel } from '../utils/format';
@@ -89,6 +91,9 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   const [resetPrecededBy, setResetPrecededBy] = useState('');
   const [resetLocation, setResetLocation] = useState('');
   const [resetTriggers, setResetTriggers] = useState<TriggerTag[]>([]);
+  const [resetNeeds, setResetNeeds] = useState<NeedTag[]>([]);
+  const [resetNextTime, setResetNextTime] = useState('');
+  const [resetSaveAsPlan, setResetSaveAsPlan] = useState(true);
   // Errors stay hidden until the first save attempt, so an untouched form does
   // not open covered in red.
   const [showResetErrors, setShowResetErrors] = useState(false);
@@ -97,6 +102,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   const [urgeNote, setUrgeNote] = useState('');
   const [urgeIntensity, setUrgeIntensity] = useState<number | undefined>(undefined);
   const [urgeTriggers, setUrgeTriggers] = useState<TriggerTag[]>([]);
+  const [urgeNeeds, setUrgeNeeds] = useState<NeedTag[]>([]);
+  const [urgePlanId, setUrgePlanId] = useState<string | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
@@ -110,6 +117,9 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     setResetPrecededBy('');
     setResetLocation('');
     setResetTriggers([]);
+    setResetNeeds([]);
+    setResetNextTime('');
+    setResetSaveAsPlan(true);
     setShowResetErrors(false);
     setShowResetDialog(true);
   };
@@ -121,6 +131,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     setUrgeNote('');
     setUrgeIntensity(undefined);
     setUrgeTriggers([]);
+    setUrgeNeeds([]);
+    setUrgePlanId(undefined);
     setShowUrgeDialog(true);
   };
 
@@ -173,16 +185,15 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     return isNaN(combined.getTime()) ? null : combined;
   };
 
-  // Every field on the relapse form is required: a slip logged with only a
-  // timestamp tells the user nothing later, and the debrief is the part that
-  // turns the history into something readable.
+  // The relapse form asks for the parts that change what happens next: what
+  // set it off, what came before, and what the user will do differently. Where
+  // it happened and the free-text account are optional.
   const resetErrors = {
     date: resetDate.trim().length === 0,
     time: resetTime.trim().length === 0,
     triggers: resetTriggers.length === 0,
     precededBy: resetPrecededBy.trim().length === 0,
-    location: resetLocation.trim().length === 0,
-    note: resetNote.trim().length === 0
+    nextTime: resetNextTime.trim().length === 0
   };
   const isResetIncomplete = Object.values(resetErrors).some(Boolean);
 
@@ -196,11 +207,17 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
       setShowResetErrors(true);
       return; // Guard against incomplete/invalid input
     }
+    const nextTime = resetNextTime.trim();
     onReset(addiction.id, resetDateTime, {
-      text: resetNote.trim(),
+      text: resetNote.trim() || undefined,
       precededBy: resetPrecededBy.trim(),
-      location: resetLocation.trim(),
-      triggers: resetTriggers
+      location: resetLocation.trim() || undefined,
+      triggers: resetTriggers,
+      needs: resetNeeds.length > 0 ? resetNeeds : undefined,
+      nextTime,
+      plan: resetSaveAsPlan
+        ? { cue: buildCueFromTriggers(resetTriggers, t), action: nextTime, triggers: resetTriggers }
+        : undefined
     });
     setShowResetDialog(false);
   };
@@ -215,7 +232,9 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
       outcome: 'resisted',
       intensity: urgeIntensity,
       triggers: urgeTriggers.length > 0 ? urgeTriggers : undefined,
+      needs: urgeNeeds.length > 0 ? urgeNeeds : undefined,
       text: urgeNote.trim() || undefined,
+      planId: urgePlanId,
       source: 'manual'
     });
     setShowUrgeDialog(false);
@@ -341,6 +360,11 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
   };
 
   const timeline = useMemo(() => buildTimeline(addiction), [addiction]);
+  const plansById = useMemo(
+    () => new Map((addiction.copingPlans ?? []).map(plan => [plan.id, plan])),
+    [addiction.copingPlans]
+  );
+  const rankedPlans = useMemo(() => rankPlans(addiction).map(entry => entry.plan), [addiction]);
 
   // Events of the visible month, bucketed by day-of-month. The grid only ever
   // renders markers from this map: the details themselves live in the panel
@@ -477,6 +501,13 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
     const text = isUrge ? event.urge.text : event.relapse.text;
     const precededBy = isUrge ? undefined : event.relapse.precededBy;
     const location = isUrge ? undefined : event.relapse.location;
+    const needs = isUrge ? event.urge.needs : event.relapse.needs;
+    const nextTime = isUrge ? undefined : event.relapse.nextTime;
+    // A relapse from the craving screen carries its plan on the paired urge.
+    const usedPlanId = isUrge
+      ? event.urge.planId
+      : (addiction.urges ?? []).find(urge => urge.id === event.relapse.urgeId)?.planId;
+    const usedPlan = usedPlanId ? plansById.get(usedPlanId) : undefined;
     const heldFor = isUrge ? event.urge.secondsHeld : undefined;
 
     return (
@@ -516,6 +547,14 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
           )}
 
           <TriggerTagList tags={triggers} className="mt-1.5" />
+          <NeedTagList tags={needs} className="mt-1" />
+
+          {usedPlan && (
+            <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words">
+              <span className="text-sage-400 dark:text-sage-500">{t('planUsedLabel')} </span>
+              {usedPlan.action}
+            </div>
+          )}
 
           {precededBy && (
             <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words whitespace-pre-wrap">
@@ -532,6 +571,12 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
           {text && (
             <div className="text-sm text-sage-600 dark:text-sage-400 mt-1 break-words whitespace-pre-wrap">
               {text}
+            </div>
+          )}
+          {nextTime && (
+            <div className="text-sm text-brand-700 dark:text-brand-300 mt-1 break-words whitespace-pre-wrap">
+              <span className="text-sage-400 dark:text-sage-500">{t('nextTimeLabel')} </span>
+              {nextTime}
             </div>
           )}
         </div>
@@ -766,7 +811,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                        hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
             >
               <RefreshCw size={16} />
-              <span>{t('reset')}</span>
+              <span>{t('hadRelapse')}</span>
             </button>
           </div>
         </div>
@@ -822,6 +867,10 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
 
               <TriggerTagPicker value={urgeTriggers} onChange={setUrgeTriggers} hint={t('triggersHint')} />
 
+              <NeedTagPicker value={urgeNeeds} onChange={setUrgeNeeds} />
+
+              <PlanUsedPicker plans={rankedPlans} value={urgePlanId} onChange={setUrgePlanId} />
+
               <div>
                 <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
                   {t('noteOptional')}
@@ -875,6 +924,8 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
               </button>
             </div>
 
+            <p className="-mt-2 mb-4 text-sm text-sage-500 dark:text-sage-400">{t('relapseKindIntro')}</p>
+
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -925,32 +976,41 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                 {renderResetFieldError(resetErrors.precededBy)}
               </div>
 
+              <NeedTagPicker value={resetNeeds} onChange={setResetNeeds} />
+
               <div>
-                {renderRequiredLabel(t('whereDidItHappen'))}
+                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
+                  {t('whereDidItHappen')} <span className="font-normal text-sage-400">{t('optionalSuffix')}</span>
+                </label>
                 <input
                   type="text"
-                  required
                   value={resetLocation}
                   onChange={(e) => setResetLocation(e.target.value)}
                   placeholder={t('locationPlaceholder')}
-                  aria-invalid={showResetErrors && resetErrors.location}
-                  className={resetFieldClass(resetErrors.location)}
+                  className={resetFieldClass(false)}
                 />
-                {renderResetFieldError(resetErrors.location)}
               </div>
 
               <div>
-                {renderRequiredLabel(t('whatHappened'))}
+                <label className="block text-sm font-medium text-sage-700 dark:text-sage-300 mb-1">
+                  {t('whatHappened')} <span className="font-normal text-sage-400">{t('optionalSuffix')}</span>
+                </label>
                 <textarea
-                  required
                   value={resetNote}
                   onChange={(e) => setResetNote(e.target.value)}
                   placeholder={t('relapsePrompt')}
-                  aria-invalid={showResetErrors && resetErrors.note}
-                  className={resetFieldClass(resetErrors.note, 'resize-none h-20')}
+                  className={resetFieldClass(false, 'resize-none h-20')}
                 />
-                {renderResetFieldError(resetErrors.note)}
               </div>
+
+              <NextTimePlanField
+                value={resetNextTime}
+                onChange={setResetNextTime}
+                saveAsPlan={resetSaveAsPlan}
+                onSaveAsPlanChange={setResetSaveAsPlan}
+                triggers={resetTriggers}
+                error={showResetErrors && resetErrors.nextTime ? t('fieldRequired') : undefined}
+              />
 
               {showResetErrors && isResetIncomplete && (
                 <p role="alert" className="text-sm font-medium text-rose-600 dark:text-rose-400">
@@ -973,7 +1033,7 @@ const AddictionItem: React.FC<AddictionItemProps> = ({
                             rounded-xl hover:bg-rose-700 dark:hover:bg-rose-500 
                             transition-colors duration-200"
                 >
-                  {t('confirmReset')}
+                  {t('saveAndRestart')}
                 </button>
               </div>
             </div>

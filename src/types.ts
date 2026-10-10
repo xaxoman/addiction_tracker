@@ -18,6 +18,24 @@ export const TRIGGER_TAGS = [
 
 export type TriggerTag = (typeof TRIGGER_TAGS)[number];
 
+// What the urge was trying to get. Triggers describe the situation; the need is
+// the function the habit served in it, which is what a replacement has to meet
+// for the craving to actually go away.
+export const NEED_TAGS = [
+  'relief',
+  'distraction',
+  'reward',
+  'energy',
+  'connection',
+  'sleep'
+] as const;
+
+export type NeedTag = (typeof NEED_TAGS)[number];
+
+// The answer to "did it go the way you meant it to?", shared by the daily
+// intention and the weekly focus.
+export type FollowThrough = 'yes' | 'partly' | 'no';
+
 // A single recorded relapse. `previousLastEngaged` snapshots the streak anchor
 // that was in place before this relapse was recorded, so deleting an entry that
 // was added by mistake can restore the streak exactly as it was.
@@ -32,6 +50,11 @@ export interface RelapseEntry {
   // form itself requires it for everything logged from now on.
   location?: string;
   triggers?: TriggerTag[];
+  needs?: NeedTag[];
+  // Debrief: what the user will do differently next time. Every slip ends on
+  // this, and by default it is saved as an if-then plan (`planCreatedId`).
+  nextTime?: string;
+  planCreatedId?: string;
   // Set when the slip was logged from a craving that was tracked as an urge,
   // so the two entries can be kept in step when either one is deleted.
   urgeId?: string;
@@ -49,7 +72,11 @@ export interface UrgeEntry {
   // the exit on filling this in.
   intensity?: number;
   triggers?: TriggerTag[];
+  needs?: NeedTag[];
   text?: string;
+  // The if-then plan the user says they used. Counting these against the
+  // outcome is what turns "my plans" into "the plans that work for me".
+  planId?: string;
   // How long the user stayed with the craving before leaving the panic screen.
   secondsHeld?: number;
   source?: 'panic' | 'manual';
@@ -63,6 +90,9 @@ export interface CopingPlan {
   id: string;
   cue: string;
   action: string;
+  // The situations this plan is for. The panic screen puts the plans whose
+  // triggers match what is happening right now first.
+  triggers?: TriggerTag[];
 }
 
 export interface Addiction {
@@ -103,4 +133,34 @@ export interface DailyCheckIn {
   cravingIntensity: number;
   note?: string;
   recordedAt: Date;
+}
+
+// The morning half of the check-in: the moment today is most likely to go
+// wrong and what the user will do about it. The evening half is `outcome`.
+export interface DailyIntention {
+  // Local calendar day as "YYYY-MM-DD", one intention per day.
+  date: string;
+  riskMoment: string;
+  action: string;
+  addictionId?: string;
+  outcome?: FollowThrough;
+  setAt: Date;
+  reviewedAt?: Date;
+}
+
+// One weekly review: the single change the user chose to work on for the
+// following week. `outcome` is filled in at the start of the next review.
+export interface WeeklyReview {
+  id: string;
+  createdAt: Date;
+  focus: string;
+  addictionId?: string;
+  outcome?: FollowThrough;
+}
+
+// Everything the user writes about themselves rather than about one habit.
+export interface JournalData {
+  checkIns: DailyCheckIn[];
+  intentions: DailyIntention[];
+  reviews: WeeklyReview[];
 }

@@ -27,7 +27,7 @@ interface SettingsDialogProps {
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addictions }) => {
   const { theme, toggleTheme, setThemeMode } = useTheme();
   const { replaceAddictions } = useAddictions();
-  const { checkIns, replaceCheckIns } = useCheckIns();
+  const { journal, replaceJournal } = useCheckIns();
   const {
     language,
     setLanguage,
@@ -102,7 +102,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
     setIsHandlingBackup(true);
 
     try {
-      const { backup, filename } = await createBackup(addictions, theme, 'manual', checkIns);
+      const { backup, filename } = await createBackup(addictions, theme, 'manual', journal);
       setLastBackupAt(backup.createdAt);
       setLastBackupFilename(filename);
       alert(`${t('backupCreated')} ${filename}`);
@@ -125,11 +125,13 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose, addict
     try {
       const backup = await parseBackupFile(file);
       replaceAddictions(backup.data.addictions);
-      // Absent in backups written before check-ins existed; importing one must
-      // not silently wipe the series on this device.
-      if (backup.data.checkIns) {
-        replaceCheckIns(backup.data.checkIns);
-      }
+      // Each journal field is absent in backups written before it existed;
+      // importing one must not silently wipe that part of this device's data.
+      replaceJournal({
+        checkIns: backup.data.checkIns,
+        intentions: backup.data.intentions,
+        reviews: backup.data.reviews
+      });
       setThemeMode(backup.data.settings.theme);
       setLanguage(backup.data.settings.language === 'it' ? 'it' : 'en');
 

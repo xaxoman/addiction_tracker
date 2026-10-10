@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AddictionProvider, useAddictions, RelapseDetails, UrgeInput } from './context/AddictionContext';
 import { AppSettingsProvider, useAppSettings } from './context/AppSettingsContext';
-import { CheckInProvider, useCheckIns, CheckInInput } from './context/CheckInContext';
+import { CheckInProvider, useCheckIns, CheckInInput, IntentionInput, ReviewInput } from './context/CheckInContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CloudSyncProvider } from './context/CloudSyncContext';
-import { Addiction } from './types';
+import { Addiction, CopingPlan, FollowThrough } from './types';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import BottomTabBar from './components/BottomTabBar';
@@ -19,11 +19,24 @@ import TrendCharts from './components/TrendCharts';
 import EmptyState from './components/EmptyState';
 import BreathingSheet from './components/BreathingSheet';
 import PanicScreen, { UrgeOutcomePayload } from './components/PanicScreen';
+import WeeklyReviewSheet from './components/WeeklyReviewSheet';
+import StatsSection from './components/StatsSection';
+import QuoteCard from './components/QuoteCard';
 import { capacitorService } from './services/capacitor';
 import { safeAreaService } from './services/safeArea';
 import { createAutomaticBackupIfDue } from './utils/backup';
-import { startReminderScheduler, ScheduledMilestone } from './services/checkInNotifications';
-import { getRiskWindows } from './utils/riskWindows';
+import {
+  listenForPlanOpens,
+  PlanTarget,
+  RiskNudge,
+  startReminderScheduler,
+  ScheduledMilestone
+} from './services/checkInNotifications';
+import { formatWindowTime, getRiskWindows } from './utils/riskWindows';
+import { pickPlan } from './utils/plans';
+import { getQuoteOfTheDay } from './utils/quotes';
+import { toDayKey } from './utils/dataValidation';
+import { WEEKDAY_KEYS } from './utils/weeklyReview';
 import { getUpcomingMilestones } from './utils/milestones';
 import { getStreakStats } from './utils/streaks';
 import { useI18n } from './i18n/useI18n';
@@ -38,9 +51,21 @@ const AppContent = () => {
     deleteRelapse,
     logUrge,
     deleteUrge,
+    addCopingPlan,
     reorderAddictions
   } = useAddictions();
-  const { checkIns, todaysCheckIn, recordCheckIn } = useCheckIns();
+  const {
+    checkIns,
+    todaysCheckIn,
+    recordCheckIn,
+    intentions,
+    todaysIntention,
+    setIntention,
+    recordIntentionOutcome,
+    latestReview,
+    saveReview,
+    journal
+  } = useCheckIns();
   const { theme } = useTheme();
   const { session } = useAuth();
   const {
@@ -57,11 +82,15 @@ const AppContent = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isBreathingOpen, setIsBreathingOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [quoteIndex, setQuoteIndex] = useState(() => getQuoteOfTheDay());
   const [journalSignal, setJournalSignal] = useState(0);
   const [notice, setNotice] = useState<{ text: string; tone: 'backup' | 'urge' } | null>(null);
   // Held by id rather than by object so the open screen keeps re-rendering
   // against the live tracker as urges and relapses are logged.
   const [panicAddictionId, setPanicAddictionId] = useState<string | null>(null);
+  // Set when the craving screen is opened from a risk nudge: its plan goes first.
+  const [panicPlanId, setPanicPlanId] = useState<string | undefined>(undefined);
   // The tracker the overview's hero, chart and urge log are about. Falls back
   // to the first one so a deleted or never-chosen focus still resolves.
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -89,12 +118,33 @@ const AppContent = () => {
   }, [isDarkMode]);
 
   // The user's own high-risk weekday/hour windows, worked out from every urge
-  // and relapse they have logged. Empty until there is enough data to mean
-  // anything, in which case only the fixed daily reminder is scheduled.
-  const riskWindows = useMemo(
-    () => (riskNudgesEnabled ? getRiskWindows(addictions) : []),
-    [addictions, riskNudgesEnabled]
-  );
+  // and relapse they have logged, each written up with the plan that fits it.
+  // Empty until there is enough data to mean anything. The in-app banner uses
+  // them whether or not notifications are on.
+  const riskNudges = useMemo<RiskNudge[]>(() => (
+    getRiskWindows(addictions).map(window => {
+      const addiction = addictions.find(entry => entry.id === window.addictionId);
+      const plan = addiction ? pickPlan(addiction, window.triggers) : null;
+      const params = { day: t(WEEKDAY_KEYS[window.weekday]), time: formatWindowTime(window) };
+      return {
+        window,
+        title: t('riskNudgeTitle'),
+        body: plan
+          ? t('riskNudgeSpecificBody', { ...params, plan: plan.action })
+          : t('riskNudgeNoPlanBody', params),
+        addictionId: addiction?.id,
+        planId: plan?.id
+      };
+    })
+  ), [addictions, t]);
+
+  // Yesterday's intention, while it still waits for its "did it go that way?".
+  const pendingIntention = useMemo(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const key = toDayKey(yesterday);
+    return intentions.find(entry => entry.date === key && !entry.outcome) ?? null;
+  }, [intentions]);
 
   const upcomingMilestones = useMemo<ScheduledMilestone[]>(() => {
     if (!milestoneAlertsEnabled) {
@@ -122,15 +172,15 @@ const AppContent = () => {
       reminderTime: dailyCheckInTime,
       dailyTitle: t('checkInTitle'),
       dailyBody: t('checkInBody'),
-      riskEnabled: riskNudgesEnabled && riskWindows.length > 0,
-      riskWindows,
-      riskTitle: t('riskNudgeTitle'),
-      riskBody: t('riskNudgeBody'),
+      riskEnabled: riskNudgesEnabled && riskNudges.length > 0,
+      riskNudges,
+      openPlanLabel: t('openPlan'),
       milestoneEnabled: milestoneAlertsEnabled,
       milestones: upcomingMilestones,
       onTrigger: () => {
         capacitorService.vibrate();
-      }
+      },
+      onOpenPlan: target => handleOpenPlanRef.current(target)
     });
 
     return () => stopScheduler();
@@ -138,7 +188,7 @@ const AppContent = () => {
     dailyCheckInEnabled,
     dailyCheckInTime,
     riskNudgesEnabled,
-    riskWindows,
+    riskNudges,
     milestoneAlertsEnabled,
     upcomingMilestones,
     t
@@ -148,7 +198,7 @@ const AppContent = () => {
     // Check on mount and whenever user data changes so we can create a daily backup.
     const checkAndCreateDailyBackup = async () => {
       try {
-        const result = await createAutomaticBackupIfDue(addictions, theme, checkIns);
+        const result = await createAutomaticBackupIfDue(addictions, theme, journal);
         if (result.created) {
           setNotice({ text: t('autoBackupCreatedPill'), tone: 'backup' });
         }
@@ -165,7 +215,7 @@ const AppContent = () => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [addictions, checkIns, theme]);
+  }, [addictions, journal, theme]);
 
   useEffect(() => {
     if (!notice) {
@@ -261,10 +311,32 @@ const AppContent = () => {
     deleteUrge(id, urgeId);
   };
 
-  const handleOpenPanic = async (addiction: Addiction) => {
+  const handleOpenPanic = async (addiction: Addiction, planId?: string) => {
     await capacitorService.vibrate();
+    setPanicPlanId(planId);
     setPanicAddictionId(addiction.id);
   };
+
+  const closePanic = () => {
+    setPanicAddictionId(null);
+    setPanicPlanId(undefined);
+  };
+
+  // From a risk nudge (notification or in-app banner): the craving screen for
+  // the tracker the nudge was about, with its plan first.
+  const handleOpenPlan = (target: PlanTarget) => {
+    const addiction = findAddiction(target.addictionId ?? '') ?? focusAddiction;
+    if (addiction) {
+      void handleOpenPanic(addiction, target.planId);
+    }
+  };
+
+  // Notification callbacks are registered once; this keeps them pointed at the
+  // current trackers.
+  const handleOpenPlanRef = useRef(handleOpenPlan);
+  handleOpenPlanRef.current = handleOpenPlan;
+
+  useEffect(() => listenForPlanOpens(target => handleOpenPlanRef.current(target)), []);
 
   const handlePanicOutcome = async (
     outcome: 'resisted' | 'relapsed',
@@ -278,21 +350,60 @@ const AppContent = () => {
       outcome,
       intensity: payload.intensity,
       triggers: payload.triggers.length > 0 ? payload.triggers : undefined,
+      needs: payload.needs,
       text: payload.text,
+      planId: payload.planId,
       secondsHeld: payload.secondsHeld,
       source: 'panic',
       relapse: outcome === 'relapsed'
-        ? { text: payload.text, precededBy: payload.precededBy, location: payload.location }
+        ? {
+            text: payload.text,
+            precededBy: payload.precededBy,
+            location: payload.location,
+            nextTime: payload.nextTime,
+            plan: payload.plan
+          }
         : undefined
     });
 
-    setPanicAddictionId(null);
+    closePanic();
   };
 
   const handleRecordCheckIn = async (input: CheckInInput) => {
     await capacitorService.vibrate();
     recordCheckIn(input);
     setNotice({ text: t('checkedInToday'), tone: 'urge' });
+  };
+
+  const handleSetIntention = async (input: IntentionInput) => {
+    await capacitorService.vibrate();
+    setIntention(input);
+    setNotice({ text: t('intentionSaved'), tone: 'urge' });
+  };
+
+  const handleIntentionOutcome = async (date: string, outcome: FollowThrough) => {
+    await capacitorService.vibrate();
+    recordIntentionOutcome(date, outcome);
+  };
+
+  const handleAddPlan = async (addictionId: string, plan: Omit<CopingPlan, 'id'>) => {
+    await capacitorService.vibrate();
+    addCopingPlan(addictionId, plan);
+    setNotice({ text: t('planAddedToast'), tone: 'urge' });
+  };
+
+  const handleSaveReview = async (
+    review: ReviewInput,
+    plan?: { addictionId: string; plan: Omit<CopingPlan, 'id'> }
+  ) => {
+    await capacitorService.vibrate();
+    saveReview(review);
+    if (plan) {
+      addCopingPlan(plan.addictionId, plan.plan);
+    }
+    setIsReviewOpen(false);
+    setActiveTab('home');
+    setNotice({ text: t('weeklyFocusSaved'), tone: 'urge' });
   };
 
   const handleTabChange = async (tab: AppTab) => {
@@ -315,6 +426,9 @@ const AppContent = () => {
         break;
       case 'breathing':
         setIsBreathingOpen(true);
+        break;
+      case 'review':
+        setIsReviewOpen(true);
         break;
       case 'settings':
         setIsSettingsOpen(true);
@@ -352,9 +466,17 @@ const AppContent = () => {
                   focusAddiction={focusAddiction}
                   onFocusChange={setFocusId}
                   todaysCheckIn={todaysCheckIn}
+                  todaysIntention={todaysIntention}
+                  pendingIntention={pendingIntention}
+                  latestReview={latestReview}
+                  riskNudges={riskNudges}
                   journalSignal={journalSignal}
                   onRecordCheckIn={handleRecordCheckIn}
-                  onOpenPanic={handleOpenPanic}
+                  onSetIntention={handleSetIntention}
+                  onIntentionOutcome={handleIntentionOutcome}
+                  onStartReview={() => setIsReviewOpen(true)}
+                  onOpenPlan={handleOpenPlan}
+                  onOpenPanic={addiction => handleOpenPanic(addiction)}
                   onOpenBreathing={() => setIsBreathingOpen(true)}
                   onAdd={openAddDialog}
                   onReset={handleReset}
@@ -378,7 +500,11 @@ const AppContent = () => {
 
             {activeTab === 'trends' && (
               addictions.length > 0 ? (
-                <TrendCharts addictions={addictions} checkIns={checkIns} />
+                <div className="space-y-4">
+                  <TrendCharts addictions={addictions} checkIns={checkIns} onAddPlan={handleAddPlan} />
+                  <StatsSection addictions={addictions} />
+                  <QuoteCard quoteIndex={quoteIndex} onShuffle={() => setQuoteIndex(index => index + 1)} />
+                </div>
               ) : (
                 <div className="card p-6 text-center">
                   <h2 className="card-title mb-2">{t('trends')}</h2>
@@ -424,14 +550,30 @@ const AppContent = () => {
 
       {isBreathingOpen && <BreathingSheet onClose={() => setIsBreathingOpen(false)} />}
 
+      {isReviewOpen && (
+        <WeeklyReviewSheet
+          addictions={addictions}
+          focusAddictionId={focusAddiction?.id}
+          checkIns={checkIns}
+          intentions={intentions}
+          latestReview={latestReview}
+          onSave={handleSaveReview}
+          onClose={() => setIsReviewOpen(false)}
+        />
+      )}
+
       {panicAddiction && (
         <PanicScreen
+          // Keyed by the plan too, so opening from a nudge while the screen is
+          // already up starts it over with that plan first.
+          key={`${panicAddiction.id}:${panicPlanId ?? ''}`}
           addiction={panicAddiction}
           emergencyContactName={emergencyContact?.name}
           emergencyContactPhone={emergencyContact?.phone}
+          initialPlanId={panicPlanId}
           onResisted={payload => handlePanicOutcome('resisted', payload)}
           onRelapsed={payload => handlePanicOutcome('relapsed', payload)}
-          onClose={() => setPanicAddictionId(null)}
+          onClose={closePanic}
         />
       )}
     </div>

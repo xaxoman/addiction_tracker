@@ -1,6 +1,18 @@
 // Data validation utilities to prevent NaN and invalid data issues
 
-import { CopingPlan, DailyCheckIn, RelapseEntry, TRIGGER_TAGS, TriggerTag, UrgeEntry } from '../types';
+import {
+  CopingPlan,
+  DailyCheckIn,
+  DailyIntention,
+  FollowThrough,
+  NEED_TAGS,
+  NeedTag,
+  RelapseEntry,
+  TRIGGER_TAGS,
+  TriggerTag,
+  UrgeEntry,
+  WeeklyReview
+} from '../types';
 
 export const validateNumber = (value: any, fallback: number = 0): number => {
   if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
@@ -45,6 +57,7 @@ export const createEntryId = (prefix: string): string => {
 export const createRelapseId = (): string => createEntryId('relapse');
 export const createUrgeId = (): string => createEntryId('urge');
 export const createCopingPlanId = (): string => createEntryId('plan');
+export const createReviewId = (): string => createEntryId('review');
 
 export const validateString = (value: any, fallback: string = ''): string => {
   if (typeof value === 'string' && value.trim().length > 0) {
@@ -73,6 +86,22 @@ export const validateTriggerTags = (value: unknown): TriggerTag[] | undefined =>
   const tags = Array.from(new Set(value.filter(isTriggerTag)));
   return tags.length > 0 ? tags : undefined;
 };
+
+const isNeedTag = (value: unknown): value is NeedTag => {
+  return typeof value === 'string' && (NEED_TAGS as readonly string[]).includes(value);
+};
+
+export const validateNeedTags = (value: unknown): NeedTag[] | undefined => {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const tags = Array.from(new Set(value.filter(isNeedTag)));
+  return tags.length > 0 ? tags : undefined;
+};
+
+const validateFollowThrough = (value: unknown): FollowThrough | undefined => (
+  value === 'yes' || value === 'partly' || value === 'no' ? value : undefined
+);
 
 const validateIntensity = (value: unknown): number | undefined => {
   const parsed = typeof value === 'number' ? value : parseFloat(String(value));
@@ -113,6 +142,9 @@ const sanitizeRelapseEntry = (value: unknown): RelapseEntry => {
     precededBy: validateOptionalString(note.precededBy),
     location: validateOptionalString(note.location),
     triggers: validateTriggerTags(note.triggers),
+    needs: validateNeedTags(note.needs),
+    nextTime: validateOptionalString(note.nextTime),
+    planCreatedId: validateOptionalString(note.planCreatedId),
     urgeId: validateOptionalString(note.urgeId),
     previousLastEngaged: validateOptionalDate(note.previousLastEngaged)
   };
@@ -130,7 +162,9 @@ const sanitizeUrgeEntry = (value: unknown): UrgeEntry => {
     outcome: urge.outcome === 'relapsed' ? 'relapsed' : 'resisted',
     intensity: validateIntensity(urge.intensity),
     triggers: validateTriggerTags(urge.triggers),
+    needs: validateNeedTags(urge.needs),
     text: validateOptionalString(urge.text),
+    planId: validateOptionalString(urge.planId),
     secondsHeld: Number.isFinite(secondsHeld) ? Math.max(0, Math.round(secondsHeld)) : undefined,
     source: urge.source === 'panic' ? 'panic' : 'manual',
     relapseId: validateOptionalString(urge.relapseId)
@@ -142,7 +176,8 @@ const sanitizeCopingPlan = (value: unknown): CopingPlan => {
   return {
     id: validateString(plan.id) || createCopingPlanId(),
     cue: validateString(plan.cue),
-    action: validateString(plan.action)
+    action: validateString(plan.action),
+    triggers: validateTriggerTags(plan.triggers)
   };
 };
 
@@ -212,4 +247,66 @@ export const sanitizeCheckIns = (value: unknown): DailyCheckIn[] => {
   });
 
   return Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date));
+};
+
+const isDayKey = (value: unknown): value is string => (
+  typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+);
+
+export const sanitizeIntention = (value: unknown): DailyIntention => {
+  const entry = asRecord(value);
+  const setAt = validateDate(entry.setAt);
+
+  return {
+    date: isDayKey(entry.date) ? entry.date : toDayKey(setAt),
+    riskMoment: validateString(entry.riskMoment),
+    action: validateString(entry.action),
+    addictionId: validateOptionalString(entry.addictionId),
+    outcome: validateFollowThrough(entry.outcome),
+    setAt,
+    reviewedAt: validateOptionalDate(entry.reviewedAt)
+  };
+};
+
+// Oldest first, one entry per day; an intention with nothing in it is dropped.
+export const sanitizeIntentions = (value: unknown): DailyIntention[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const byDay = new Map<string, DailyIntention>();
+  value
+    .map(sanitizeIntention)
+    .filter(entry => entry.riskMoment || entry.action)
+    .forEach(entry => {
+      const existing = byDay.get(entry.date);
+      if (!existing || entry.setAt.getTime() >= existing.setAt.getTime()) {
+        byDay.set(entry.date, entry);
+      }
+    });
+
+  return Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date));
+};
+
+export const sanitizeReview = (value: unknown): WeeklyReview => {
+  const entry = asRecord(value);
+  return {
+    id: validateString(entry.id) || createReviewId(),
+    createdAt: validateDate(entry.createdAt),
+    focus: validateString(entry.focus),
+    addictionId: validateOptionalString(entry.addictionId),
+    outcome: validateFollowThrough(entry.outcome)
+  };
+};
+
+// Oldest first. A review without a focus never chose anything, so it is not kept.
+export const sanitizeReviews = (value: unknown): WeeklyReview[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(sanitizeReview)
+    .filter(review => review.focus)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 };

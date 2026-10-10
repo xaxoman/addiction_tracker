@@ -1,19 +1,19 @@
 import React from 'react';
-import { NotebookPen, Sparkles, Wind, Zap } from 'lucide-react';
+import { CalendarCheck, NotebookPen, Wind, Zap } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
 
 interface ToolsAndSupportProps {
   onOpenUrgeTracker: () => void;
   onOpenJournal: () => void;
   onOpenBreathing: () => void;
-  onOpenMotivation: () => void;
+  onOpenReview: () => void;
 }
 
 const ToolsAndSupport: React.FC<ToolsAndSupportProps> = ({
   onOpenUrgeTracker,
   onOpenJournal,
   onOpenBreathing,
-  onOpenMotivation
+  onOpenReview
 }) => {
   const { t } = useI18n();
 
@@ -21,7 +21,7 @@ const ToolsAndSupport: React.FC<ToolsAndSupportProps> = ({
     { key: 'urge', icon: <Zap size={19} />, title: t('urgeTracker'), desc: t('urgeTrackerDesc'), onSelect: onOpenUrgeTracker },
     { key: 'journal', icon: <NotebookPen size={19} />, title: t('journal'), desc: t('journalDesc'), onSelect: onOpenJournal },
     { key: 'breathing', icon: <Wind size={19} />, title: t('breathing'), desc: t('breathingDesc'), onSelect: onOpenBreathing },
-    { key: 'motivation', icon: <Sparkles size={19} />, title: t('motivation'), desc: t('motivationDesc'), onSelect: onOpenMotivation }
+    { key: 'review', icon: <CalendarCheck size={19} />, title: t('weeklyReviewShort'), desc: t('weeklyReviewDesc'), onSelect: onOpenReview }
   ];
 
   return (
